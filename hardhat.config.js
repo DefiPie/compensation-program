@@ -15,37 +15,37 @@ module.exports = {
         mainnet: {
             url: `${process.env.ETHEREUM_MAINNET_URL}`,
             chainId: 1,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.ETHEREUM_MAINNET_GAS_PRICE}`,
             accounts: [`0x${process.env.ETHEREUM_MAINNET_PRIVATE_KEY}`]
         },
         rinkeby: {
             url: `${process.env.ETHEREUM_RINKEBY_URL}`,
             chainId: 4,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.ETHEREUM_RINKEBY_GAS_PRICE}`,
             accounts: [`0x${process.env.ETHEREUM_RINKEBY_PRIVATE_KEY}`]
         },
         bscmainnet: {
             url: `${process.env.BSCMAINNET_URL}`,
             chainId: 56,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.BSCMAINET_GAS_PRICE}`,
             accounts: [`0x${process.env.BSCMAINNET_PRIVATE_KEY}`]
         },
         bsctestnet: {
             url: `${process.env.BSCTESTNET_URL}`,
             chainId: 97,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.BSCTESTNET_GAS_PRICE}`,
             accounts: [`0x${process.env.BSCTESTNET_PRIVATE_KEY}`]
         },
         polygon: {
             url: `${process.env.POLYGON_URL}`,
             chainId: 137,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.POLYGON_GAS_PRICE}`,
             accounts: [`0x${process.env.POLYGON_PRIVATE_KEY}`]
         },
         mumbai: {
             url: `${process.env.MUMBAI_URL}`,
             chainId: 80001,
-            gasPrice: 20000000000,
+            gasPrice: `${process.env.MUMBAI_GAS_PRICE}`,
             accounts: [`0x${process.env.MUMBAI_PRIVATE_KEY}`]
         }
     },
