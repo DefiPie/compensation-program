@@ -1,1 +1,1 @@
-# compensation-program
+# Compensation program contracts
