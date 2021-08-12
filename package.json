@@ -9,11 +9,13 @@
   "author": "DeFiPie team",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^10.0.0",
     "hardhat": "^2.6.0",
     "openzeppelin-solidity": "^4.2.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
