@@ -9,6 +9,46 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 module.exports = {
+    networks: {
+        hardhat: {
+        },
+        mainnet: {
+            url: `${process.env.ETHEREUM_MAINNET_URL}`,
+            chainId: 1,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.ETHEREUM_MAINNET_PRIVATE_KEY}`]
+        },
+        rinkeby: {
+            url: `${process.env.ETHEREUM_RINKEBY_URL}`,
+            chainId: 4,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.ETHEREUM_RINKEBY_PRIVATE_KEY}`]
+        },
+        bscmainnet: {
+            url: `${process.env.BSCMAINNET_URL}`,
+            chainId: 56,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.BSCMAINNET_PRIVATE_KEY}`]
+        },
+        bsctestnet: {
+            url: `${process.env.BSCTESTNET_URL}`,
+            chainId: 97,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.BSCTESTNET_PRIVATE_KEY}`]
+        },
+        polygon: {
+            url: `${process.env.POLYGON_URL}`,
+            chainId: 137,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.POLYGON_PRIVATE_KEY}`]
+        },
+        mumbai: {
+            url: `${process.env.MUMBAI_URL}`,
+            chainId: 80001,
+            gasPrice: 20000000000,
+            accounts: [`0x${process.env.MUMBAI_PRIVATE_KEY}`]
+        }
+    },
     solidity: {
         compilers: [{
             version: "0.8.4",
