@@ -9,7 +9,8 @@
   "author": "DeFiPie team",
   "license": "MIT",
   "dependencies": {
-    "hardhat": "^2.6.0"
+    "hardhat": "^2.6.0",
+    "openzeppelin-solidity": "^4.2.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
