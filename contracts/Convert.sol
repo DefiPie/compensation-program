@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./tokens/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 
 contract Convert is Ownable {
+    using SafeERC20 for IERC20;
+
     address public tokenFrom;
     address public tokenTo;
 
@@ -17,6 +19,21 @@ contract Convert is Ownable {
 
         tokenFrom = tokenFrom_;
         tokenTo = tokenTo_;
+    }
+
+    function addTokenAmount(uint amount) public onlyOwner returns (bool) {
+
+        return true;
+    }
+
+    function convert(uint amount) public returns (bool) {
+
+
+        return true;
+    }
+
+    function calcConvertAmount(uint amount) public view returns (uint) {
+        return 0;
     }
 
     function doTransferOut(address token, address to, uint amount) internal {
