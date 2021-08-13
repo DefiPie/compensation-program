@@ -1,45 +1,80 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "./tokens/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 
 contract Convert is Ownable {
     using SafeERC20 for IERC20;
 
-    address public tokenFrom;
+    address public pTokenFrom;
     address public tokenTo;
+    uint public course;
 
-    constructor(address tokenFrom_, address tokenTo_) {
+    mapping(address => uint) public balances;
+
+    constructor(address pTokenFrom_, address tokenTo_, uint course_) {
         require(
-            tokenFrom_ != address(0)
+            pTokenFrom_ != address(0)
             && tokenTo_ != address(0),
             "Convert::Constructor: address is 0"
         );
 
-        tokenFrom = tokenFrom_;
+        require(
+            course_ != 0,
+            "Convert::Constructor: course is 0"
+        );
+
+        pTokenFrom = pTokenFrom_;
         tokenTo = tokenTo_;
+
+        course = course_;
     }
 
     function addTokenAmount(uint amount) public onlyOwner returns (bool) {
+        doTransferIn(owner(), tokenTo, amount);
 
         return true;
     }
 
-    function convert(uint amount) public returns (bool) {
-
+    function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
+        doTransferOut(tokenTo, owner(), amount);
 
         return true;
     }
 
-    function calcConvertAmount(uint amount) public view returns (uint) {
+    function convert(uint pTokenFromAmount) public returns (bool) {
+        balances[msg.sender] = calcConvertAmount(pTokenFromAmount);
+
+        doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
+
+        return true;
+    }
+
+    function calcConvertAmount(uint pTokenFromAmount) public view returns(uint) {
+        uint pTokenFromDecimals = ERC20(pTokenFrom).decimals();
+        uint tokenToDecimals = ERC20(tokenTo).decimals();
+        uint factor;
+
+        if (pTokenFromDecimals >= tokenToDecimals) {
+            factor = 10**(pTokenFromDecimals - tokenToDecimals);
+            return pTokenFromAmount * course / factor / 1e18;
+        } else {
+            factor = 10**(tokenToDecimals - pTokenFromDecimals);
+            return pTokenFromAmount * course * factor / 1e18;
+        }
+    }
+
+    function claimToken() public returns (bool) {
+        uint amount;
+
+        doTransferOut(tokenTo, msg.sender, amount);
+        return true;
+    }
+
+    function calcClaimAmount(uint amount) public view returns (uint) {
         return 0;
-    }
-
-    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        doTransferOut(token, owner(), amount);
-
-        return true;
     }
 
     function doTransferOut(address token, address to, uint amount) internal {
