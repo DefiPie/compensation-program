@@ -31,6 +31,12 @@ contract Refund is Ownable {
         return 0;
     }
 
+    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
+        doTransferOut(token, owner(), amount);
+
+        return true;
+    }
+
     function doTransferOut(address token, address to, uint amount) internal {
         if (amount == 0) {
             return;
