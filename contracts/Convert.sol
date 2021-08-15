@@ -12,7 +12,12 @@ contract Convert is Ownable {
     address public tokenTo;
     uint public course;
 
-    mapping(address => uint) public balances;
+    struct Balance {
+        uint amount;
+        uint out;
+    }
+
+    mapping(address => Balance) public balances;
 
     struct Checkpoint {
         uint fromBlock;
@@ -72,7 +77,7 @@ contract Convert is Ownable {
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.number < checkpoints[0].fromBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
 
-        balances[msg.sender] += calcConvertAmount(pTokenFromAmount);
+        balances[msg.sender].amount += calcConvertAmount(pTokenFromAmount);
 
         doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
@@ -94,14 +99,30 @@ contract Convert is Ownable {
     }
 
     function claimToken() public returns (bool) {
-        uint amount;
+        require(block.number > checkpoints[0].fromBlock, "Convert::claimToken: bad timing for the request");
+
+        uint amount = calcClaimAmount(msg.sender);
+
+        balances[msg.sender].out += amount;
 
         doTransferOut(tokenTo, msg.sender, amount);
+
         return true;
     }
 
-    function calcClaimAmount(uint amount) public view returns (uint) {
+    function calcClaimAmount(address user) public view returns (uint) {
+        uint amount = balances[user].amount;
+
+        if (amount == 0) {
+            return 0;
+        }
+
+
         return 0;
+    }
+
+    function getCheckpointLength() public view returns (uint) {
+        return checkpoints.length;
     }
 
     function doTransferOut(address token, address to, uint amount) internal {
