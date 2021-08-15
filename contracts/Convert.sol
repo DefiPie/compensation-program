@@ -21,7 +21,8 @@ contract Convert is Ownable {
 
     struct Checkpoint {
         uint fromBlock;
-        uint value;
+        uint toBlock;
+        uint value; // for example 10e18 is 10%
     }
 
     // num => block => value
@@ -57,16 +58,17 @@ contract Convert is Ownable {
         return true;
     }
 
-    function addCheckpoint(uint fromBlock_, uint value_) public onlyOwner returns (bool) {
+    function addCheckpoint(uint fromBlock_, uint toBlock_, uint value_) public onlyOwner returns (bool) {
         require(block.number < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {
-            require(checkpoints[length - 1].fromBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous block value");
+            require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
         }
 
         Checkpoint memory cp;
         cp.fromBlock = fromBlock_;
+        cp.toBlock = toBlock_;
         cp.value = value_;
 
         checkpoints.push(cp);
@@ -117,6 +119,26 @@ contract Convert is Ownable {
             return 0;
         }
 
+        uint claimAmount;
+        uint currentBlockNum = block.number;
+        uint allBlockAmount;
+        uint blockAmount;
+
+        for (uint i = 0; i < checkpoints.length; i++) {
+            if (currentBlockNum < checkpoints[i].fromBlock) {
+                break;
+            }
+
+            allBlockAmount = checkpoints[i].toBlock - checkpoints[i].fromBlock;
+
+            if (currentBlockNum >= checkpoints[i].toBlock) {
+                blockAmount = allBlockAmount;
+            } else {
+                blockAmount = currentBlockNum - checkpoints[i].fromBlock;
+            }
+
+            claimAmount += blockAmount * amount * checkpoints[i].value / allBlockAmount / 100  / 1e18;
+        }
 
         return 0;
     }
