@@ -14,6 +14,14 @@ contract Convert is Ownable {
 
     mapping(address => uint) public balances;
 
+    struct Checkpoint {
+        uint fromBlock;
+        uint value;
+    }
+
+    // num => block => value
+    Checkpoint[] public checkpoints;
+
     constructor(address pTokenFrom_, address tokenTo_, uint course_) {
         require(
             pTokenFrom_ != address(0)
@@ -44,8 +52,27 @@ contract Convert is Ownable {
         return true;
     }
 
+    function addCheckpoint(uint fromBlock_, uint value_) public onlyOwner returns (bool) {
+        require(block.number < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
+
+        uint length = uint(checkpoints.length);
+        if (length > 0) {
+            require(checkpoints[length - 1].fromBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous block value");
+        }
+
+        Checkpoint memory cp;
+        cp.fromBlock = fromBlock_;
+        cp.value = value_;
+
+        checkpoints.push(cp);
+
+        return true;
+    }
+
     function convert(uint pTokenFromAmount) public returns (bool) {
-        balances[msg.sender] = calcConvertAmount(pTokenFromAmount);
+        require(block.number < checkpoints[0].fromBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
+
+        balances[msg.sender] += calcConvertAmount(pTokenFromAmount);
 
         doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
