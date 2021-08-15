@@ -140,7 +140,7 @@ contract Convert is Ownable {
             claimAmount += blockAmount * amount * checkpoints[i].value / allBlockAmount / 100  / 1e18;
         }
 
-        return 0;
+        return claimAmount - balances[user].out;
     }
 
     function getCheckpointLength() public view returns (uint) {
