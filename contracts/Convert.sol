@@ -2,15 +2,13 @@
 pragma solidity ^0.8.4;
 
 import "./tokens/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 
 contract Convert is Ownable {
-    using SafeERC20 for IERC20;
-
     address public pTokenFrom;
     address public tokenTo;
     uint public course;
+    uint public startBlock;
     uint public removeBlocks = 1203664; // 0,5 year in blocks
 
     struct Balance {
@@ -29,7 +27,7 @@ contract Convert is Ownable {
     // num => block => value
     Checkpoint[] public checkpoints;
 
-    constructor(address pTokenFrom_, address tokenTo_, uint course_) {
+    constructor(address pTokenFrom_, address tokenTo_, uint course_, uint startBlock_) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0),
@@ -37,14 +35,16 @@ contract Convert is Ownable {
         );
 
         require(
-            course_ != 0,
-            "Convert::Constructor: course is 0"
+            course_ != 0
+            && startBlock_ != 0,
+            "Convert::Constructor: course or startBlock is 0"
         );
 
         pTokenFrom = pTokenFrom_;
         tokenTo = tokenTo_;
 
         course = course_;
+        startBlock = startBlock_;
     }
 
     function addTokenAmount(uint amount) public onlyOwner returns (bool) {
@@ -63,6 +63,7 @@ contract Convert is Ownable {
 
     function addCheckpoint(uint fromBlock_, uint toBlock_, uint value_) public onlyOwner returns (bool) {
         require(block.number < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
+        require(startBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {
@@ -80,11 +81,11 @@ contract Convert is Ownable {
     }
 
     function convert(uint pTokenFromAmount) public returns (bool) {
-        require(block.number < checkpoints[0].fromBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
+        require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
 
-        balances[msg.sender].amount += calcConvertAmount(pTokenFromAmount);
+        uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
-        doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
+        balances[msg.sender].amount += calcConvertAmount(amount);
 
         return true;
     }
@@ -150,17 +151,49 @@ contract Convert is Ownable {
         return checkpoints.length;
     }
 
-    function doTransferOut(address token, address to, uint amount) internal {
-        if (amount == 0) {
-            return;
-        }
+    function doTransferIn(address from, address token, uint amount) internal returns (uint) {
+        uint balanceBefore = ERC20(token).balanceOf(address(this));
+        ERC20(token).transferFrom(from, address(this), amount);
 
-        IERC20 ERC20Interface = IERC20(token);
-        ERC20Interface.safeTransfer(to, amount);
+        bool success;
+        assembly {
+            switch returndatasize()
+            case 0 {                       // This is a non-standard ERC-20
+                success := not(0)          // set success to true
+            }
+            case 32 {                      // This is a compliant ERC-20
+                returndatacopy(0, 0, 32)
+                success := mload(0)        // Set `success = returndata` of external call
+            }
+            default {                      // This is an excessively non-compliant ERC-20, revert.
+                revert(0, 0)
+            }
+        }
+        require(success, "TOKEN_TRANSFER_IN_FAILED");
+
+        // Calculate the amount that was *actually* transferred
+        uint balanceAfter = ERC20(pTokenFrom).balanceOf(address(this));
+        require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
+        return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
 
-    function doTransferIn(address from, address token, uint amount) internal {
-        IERC20 ERC20Interface = IERC20(token);
-        ERC20Interface.safeTransferFrom(from, address(this), amount);
+    function doTransferOut(address token, address to, uint amount) internal {
+        ERC20(token).transfer(to, amount);
+
+        bool success;
+        assembly {
+            switch returndatasize()
+            case 0 {                      // This is a non-standard ERC-20
+                success := not(0)          // set success to true
+            }
+            case 32 {                     // This is a complaint ERC-20
+                returndatacopy(0, 0, 32)
+                success := mload(0)        // Set `success = returndata` of external call
+            }
+            default {                     // This is an excessively non-compliant ERC-20, revert.
+                revert(0, 0)
+            }
+        }
+        require(success, "TOKEN_TRANSFER_OUT_FAILED");
     }
 }
