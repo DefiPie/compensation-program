@@ -4,9 +4,21 @@ pragma solidity ^0.8.4;
 import "./tokens/ERC20.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 
+interface ControllerInterface {
+    function getAccountLiquidity(address account) external view returns (uint, uint, uint);
+}
+
+interface AggregatorInterface {
+    function latestAnswer() external view returns (int256);
+}
+
 contract Convert is Ownable {
     address public pTokenFrom;
     address public tokenTo;
+
+    address public controller;
+    address public ETHUSDPriceFeed;
+
     uint public course;
     uint public startBlock;
     uint public removeBlocks = 1203664; // 0,5 year in blocks
@@ -27,10 +39,12 @@ contract Convert is Ownable {
     // num => block => value
     Checkpoint[] public checkpoints;
 
-    constructor(address pTokenFrom_, address tokenTo_, uint course_, uint startBlock_) {
+    constructor(address pTokenFrom_, address tokenTo_, address controller_, address ETHUSDPriceFeed_, uint course_, uint startBlock_) {
         require(
             pTokenFrom_ != address(0)
-            && tokenTo_ != address(0),
+            && tokenTo_ != address(0)
+            && controller_ != address(0)
+            && ETHUSDPriceFeed_ != address(0),
             "Convert::Constructor: address is 0"
         );
 
@@ -42,6 +56,9 @@ contract Convert is Ownable {
 
         pTokenFrom = pTokenFrom_;
         tokenTo = tokenTo_;
+
+        controller = controller_;
+        ETHUSDPriceFeed = ETHUSDPriceFeed_;
 
         course = course_;
         startBlock = startBlock_;
@@ -82,6 +99,13 @@ contract Convert is Ownable {
 
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
+
+        (uint errorCode, , uint shortfall) = ControllerInterface(controller).getAccountLiquidity(msg.sender);
+        require(errorCode == 0, "Convert::convert: controller error");
+        uint ETHUSDPrice = uint(AggregatorInterface(ETHUSDPriceFeed).latestAnswer());
+        uint sumBorrow = shortfall * ETHUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
+
+        require(sumBorrow < 1, "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
