@@ -102,10 +102,13 @@ contract Convert is Ownable {
 
         (uint errorCode, , uint shortfall) = ControllerInterface(controller).getAccountLiquidity(msg.sender);
         require(errorCode == 0, "Convert::convert: controller error");
-        uint ETHUSDPrice = uint(AggregatorInterface(ETHUSDPriceFeed).latestAnswer());
-        uint sumBorrow = shortfall * ETHUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
 
-        require(sumBorrow < 1, "Convert::convert: sumBorrow must be less than $1");
+        if (shortfall != 0) {
+            uint ETHUSDPrice = uint(AggregatorInterface(ETHUSDPriceFeed).latestAnswer());
+            uint sumBorrow = shortfall * ETHUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
+
+            require(sumBorrow < 1, "Convert::convert: sumBorrow must be less than $1");
+        }
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
