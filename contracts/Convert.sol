@@ -11,6 +11,7 @@ contract Convert is Ownable {
     address public pTokenFrom;
     address public tokenTo;
     uint public course;
+    uint public removeBlocks = 1203664; // 0,5 year in blocks
 
     struct Balance {
         uint amount;
@@ -53,6 +54,8 @@ contract Convert is Ownable {
     }
 
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
+        require((checkpoints[checkpoints.length - 1].toBlock + removeBlocks) < block.number, "Convert::removeUnusedToken: bad timing for the request");
+
         doTransferOut(tokenTo, owner(), amount);
 
         return true;
