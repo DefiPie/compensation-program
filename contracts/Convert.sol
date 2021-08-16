@@ -4,8 +4,17 @@ pragma solidity ^0.8.4;
 import "./tokens/ERC20.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 
+interface PTokenInterface {
+    function borrowBalanceStored(address account) external view returns (uint);
+}
+
+interface PriceOracle {
+    function getUnderlyingPrice(address pToken) external view returns (uint);
+}
+
 interface ControllerInterface {
-    function getAccountLiquidity(address account) external view returns (uint, uint, uint);
+    function getOracle() external view returns (PriceOracle);
+    function getAssetsIn(address account) external view returns (address[] memory);
 }
 
 interface AggregatorInterface {
@@ -100,14 +109,13 @@ contract Convert is Ownable {
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
 
-        (uint errorCode, , uint shortfall) = ControllerInterface(controller).getAccountLiquidity(msg.sender);
-        require(errorCode == 0, "Convert::convert: controller error");
+        uint sumBorrow = calcAccountBorrow(msg.sender);
 
-        if (shortfall != 0) {
+        if (sumBorrow != 0) {
             uint ETHUSDPrice = uint(AggregatorInterface(ETHUSDPriceFeed).latestAnswer());
-            uint sumBorrow = shortfall * ETHUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
+            uint loan = sumBorrow * ETHUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
 
-            require(sumBorrow < 1, "Convert::convert: sumBorrow must be less than $1");
+            require(loan < 1, "Convert::convert: sumBorrow must be less than $1");
         }
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
@@ -222,5 +230,23 @@ contract Convert is Ownable {
             }
         }
         require(success, "TOKEN_TRANSFER_OUT_FAILED");
+    }
+
+    function calcAccountBorrow(
+        address account
+    ) public view returns (uint) {
+        uint sumBorrow;
+
+        address[] memory assets = ControllerInterface(controller).getAssetsIn(account);
+        for (uint i = 0; i < assets.length; i++) {
+            address asset = assets[i];
+
+            uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
+            uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
+
+            sumBorrow += price * borrowBalance;
+        }
+
+        return sumBorrow;
     }
 }
