@@ -21,7 +21,31 @@ interface AggregatorInterface {
     function latestAnswer() external view returns (int256);
 }
 
-contract Convert is Ownable {
+contract BlackList is Ownable {
+    mapping (address => bool) public isBlackListed;
+
+    event AddedBlackList(address _user);
+
+    event RemovedBlackList(address _user);
+
+    function addBlackList (address _evilUser) public onlyOwner {
+        isBlackListed[_evilUser] = true;
+
+        emit AddedBlackList(_evilUser);
+    }
+
+    function removeBlackList (address _clearedUser) public onlyOwner {
+        isBlackListed[_clearedUser] = false;
+
+        emit RemovedBlackList(_clearedUser);
+    }
+
+    function getBlackListStatus(address _maker) external view returns (bool) {
+        return isBlackListed[_maker];
+    }
+}
+
+contract Convert is BlackList {
     address public pTokenFrom;
     address public tokenTo;
 
@@ -141,6 +165,7 @@ contract Convert is Ownable {
 
     function claimToken() public returns (bool) {
         require(block.number > checkpoints[0].fromBlock, "Convert::claimToken: bad timing for the request");
+        require(!isBlackListed[msg.sender], "Convert::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender);
 
