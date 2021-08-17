@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "./tokens/ERC20.sol";
-import "openzeppelin-solidity/contracts/access/Ownable.sol";
+import "./Blacklist.sol";
 
-contract Refund is Ownable {
+contract Refund is BlackList {
 
     constructor() {
 

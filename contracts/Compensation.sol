@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "./tokens/ERC20.sol";
-import "openzeppelin-solidity/contracts/access/Ownable.sol";
+import "./Blacklist.sol";
 
-contract Compensation is Ownable {
+contract Compensation is BlackList {
     address public stableCoin;
 
     constructor(address stableCoin_) {
