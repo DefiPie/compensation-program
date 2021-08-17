@@ -14,7 +14,7 @@ contract Convert is BlackList {
 
     uint public course;
     uint public startBlock;
-    uint public removeBlocks = 1203664; // 0,5 year in blocks
+    uint public removeBlocks = 1203664; // 0,5 year in blocks for eth
 
     struct Balance {
         uint amount;
@@ -58,7 +58,7 @@ contract Convert is BlackList {
     }
 
     function addTokenAmount(uint amount) public onlyOwner returns (bool) {
-        doTransferIn(owner(), tokenTo, amount);
+        doTransferIn(msg.sender, tokenTo, amount);
 
         return true;
     }
@@ -66,7 +66,7 @@ contract Convert is BlackList {
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
         require((checkpoints[checkpoints.length - 1].toBlock + removeBlocks) < block.number, "Convert::removeUnusedToken: bad timing for the request");
 
-        doTransferOut(tokenTo, owner(), amount);
+        doTransferOut(tokenTo, msg.sender, amount);
 
         return true;
     }

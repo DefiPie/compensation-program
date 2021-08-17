@@ -5,23 +5,52 @@ import "./tokens/ERC20.sol";
 import "./Blacklist.sol";
 
 contract Compensation is BlackList {
-    address public stableCoin;
 
-    constructor(address stableCoin_) {
+    address public stableCoin;
+    uint public startBlock;
+    uint public removeBlocks = 1203664; // 0,5 year in blocks for eth
+
+    mapping(address => uint) pTokens;
+
+    constructor(address stableCoin_, uint startBlock_, uint removeBlocks_) {
         require(
             stableCoin != address(0),
             "Compensation::Constructor: address is 0"
         );
 
+        require(
+            startBlock_ != 0
+            && removeBlocks_ != 0,
+            "Compensation::Constructor: block num is 0"
+        );
+
+        require(
+            startBlock_ > block.number,
+            "Compensation::Constructor: start block must be more than current block"
+        );
+
         stableCoin = stableCoin_;
+
+        startBlock = startBlock_;
+        removeBlocks = removeBlocks_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
+        pTokens[pToken] = price;
 
         return true;
     }
 
     function addStableCoinAmount(uint amount) public onlyOwner returns (bool) {
+        doTransferIn(msg.sender, stableCoin, amount);
+
+        return true;
+    }
+
+    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
+        require(startBlock + removeBlocks < block.number, "Convert::removeUnused: bad timing for the request");
+
+        doTransferOut(token, msg.sender, amount);
 
         return true;
     }
@@ -35,13 +64,6 @@ contract Compensation is BlackList {
 
         return 0;
     }
-
-    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        doTransferOut(token, owner(), amount);
-
-        return true;
-    }
-
 
     function doTransferIn(address from, address token, uint amount) internal returns (uint) {
         uint balanceBefore = ERC20(token).balanceOf(address(this));
