@@ -211,6 +211,24 @@ contract Convert is BlackList {
         return checkpoints.length;
     }
 
+    function calcAccountBorrow(
+        address account
+    ) public view returns (uint) {
+        uint sumBorrow;
+
+        address[] memory assets = ControllerInterface(controller).getAssetsIn(account);
+        for (uint i = 0; i < assets.length; i++) {
+            address asset = assets[i];
+
+            uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
+            uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
+
+            sumBorrow += price * borrowBalance;
+        }
+
+        return sumBorrow;
+    }
+
     function doTransferIn(address from, address token, uint amount) internal returns (uint) {
         uint balanceBefore = ERC20(token).balanceOf(address(this));
         ERC20(token).transferFrom(from, address(this), amount);
@@ -232,7 +250,7 @@ contract Convert is BlackList {
         require(success, "TOKEN_TRANSFER_IN_FAILED");
 
         // Calculate the amount that was *actually* transferred
-        uint balanceAfter = ERC20(pTokenFrom).balanceOf(address(this));
+        uint balanceAfter = ERC20(token).balanceOf(address(this));
         require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
@@ -255,23 +273,5 @@ contract Convert is BlackList {
             }
         }
         require(success, "TOKEN_TRANSFER_OUT_FAILED");
-    }
-
-    function calcAccountBorrow(
-        address account
-    ) public view returns (uint) {
-        uint sumBorrow;
-
-        address[] memory assets = ControllerInterface(controller).getAssetsIn(account);
-        for (uint i = 0; i < assets.length; i++) {
-            address asset = assets[i];
-
-            uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
-            uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
-
-            sumBorrow += price * borrowBalance;
-        }
-
-        return sumBorrow;
     }
 }
