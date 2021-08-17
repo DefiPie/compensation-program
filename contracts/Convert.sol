@@ -2,24 +2,8 @@
 pragma solidity ^0.8.4;
 
 import "./tokens/ERC20.sol";
+import "./interfaces/Interfaces.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
-
-interface PTokenInterface {
-    function borrowBalanceStored(address account) external view returns (uint);
-}
-
-interface PriceOracle {
-    function getUnderlyingPrice(address pToken) external view returns (uint);
-}
-
-interface ControllerInterface {
-    function getOracle() external view returns (PriceOracle);
-    function getAssetsIn(address account) external view returns (address[] memory);
-}
-
-interface AggregatorInterface {
-    function latestAnswer() external view returns (int256);
-}
 
 contract BlackList is Ownable {
     mapping (address => bool) public isBlackListed;
