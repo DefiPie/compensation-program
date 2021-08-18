@@ -91,8 +91,9 @@ contract Compensation is BlackList {
     }
 
     function calcCompensationAmount(address pToken, uint amount) public returns (uint) {
+        uint price = pTokens[pToken];
 
-        return 0;
+        return amount * price;
     }
 
     function claimToken() public returns (bool) {
