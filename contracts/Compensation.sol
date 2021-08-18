@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-
-import "./Blacklist.sol";
-import "./Service.sol";
+import "./Services/Blacklist.sol";
+import "./Services/Service.sol";
 
 contract Compensation is Service, BlackList {
 

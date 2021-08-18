@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./interfaces/Interfaces.sol";
-import "./tokens/ERC20.sol";
+import "./Interfaces.sol";
+import "./ERC20.sol";
 
 contract Service {
     address public controller;

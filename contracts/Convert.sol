@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./tokens/ERC20.sol";
-import "./Blacklist.sol";
-import "./Service.sol";
+import "./Services/ERC20.sol";
+import "./Services/Blacklist.sol";
+import "./Services/Service.sol";
 
 contract Convert is Service, BlackList {
     address public pTokenFrom;
