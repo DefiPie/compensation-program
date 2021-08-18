@@ -69,8 +69,8 @@ contract Compensation is Service, BlackList {
     }
 
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.number < startBlock, "Compensation::convert: you can convert pTokens before start block only");
-        require(checkBorrowBalance(msg.sender), "Compensation::convert: sumBorrow must be less than $1");
+        require(block.number < startBlock, "Compensation::compensation: you can convert pTokens before start block only");
+        require(checkBorrowBalance(msg.sender), "Compensation::compensation: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
