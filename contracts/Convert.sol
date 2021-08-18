@@ -11,7 +11,7 @@ contract Convert is Service, BlackList {
 
     uint public course;
     uint public startBlock;
-    uint public removeBlocks = 1203664; // 0,5 year in blocks for eth
+    uint public removeBlocks;
 
     struct Balance {
         uint amount;
@@ -35,7 +35,8 @@ contract Convert is Service, BlackList {
         address controller_,
         address ETHUSDPriceFeed_,
         uint course_,
-        uint startBlock_
+        uint startBlock_,
+        uint removeBlocks_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             pTokenFrom_ != address(0)
@@ -47,8 +48,9 @@ contract Convert is Service, BlackList {
 
         require(
             course_ != 0
-            && startBlock_ != 0,
-            "Convert::Constructor: course or startBlock is 0"
+            && startBlock_ != 0
+            && removeBlocks_ != 0,
+            "Convert::Constructor: num is 0"
         );
 
         pTokenFrom = pTokenFrom_;
@@ -59,6 +61,7 @@ contract Convert is Service, BlackList {
 
         course = course_;
         startBlock = startBlock_;
+        removeBlocks = removeBlocks_;
     }
 
     function addTokenAmount(uint amount) public onlyOwner returns (bool) {

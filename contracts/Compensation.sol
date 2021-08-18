@@ -8,7 +8,7 @@ contract Compensation is Service, BlackList {
 
     address public stableCoin;
     uint public startBlock;
-    uint public removeBlocks = 1203664; // 0,5 year in blocks for eth
+    uint public removeBlocks;
 
     mapping(address => uint) public pTokens;
 
@@ -61,7 +61,7 @@ contract Compensation is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(startBlock + removeBlocks < block.number, "Convert::removeUnused: bad timing for the request");
+        require(startBlock + removeBlocks < block.number, "Compensation::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -69,8 +69,8 @@ contract Compensation is Service, BlackList {
     }
 
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.number < startBlock, "Convert::convert: you can convert pTokens before start block only");
-        require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
+        require(block.number < startBlock, "Compensation::convert: you can convert pTokens before start block only");
+        require(checkBorrowBalance(msg.sender), "Compensation::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
@@ -86,8 +86,8 @@ contract Compensation is Service, BlackList {
     }
 
     function claimToken() public returns (bool) {
-        require(block.number > startBlock, "Convert::claimToken: bad timing for the request");
-        require(!isBlackListed[msg.sender], "Convert::claimToken: user in black list");
+        require(block.number > startBlock, "Compensation::claimToken: bad timing for the request");
+        require(!isBlackListed[msg.sender], "Compensation::claimToken: user in black list");
 
         uint amount = balances[msg.sender].amount - balances[msg.sender].out;
 
