@@ -11,7 +11,7 @@ contract Convert is Service, BlackList {
 
     uint public course;
     uint public startBlock;
-    uint public removeBlocks;
+    uint public endBlock;
 
     struct Balance {
         uint amount;
@@ -34,7 +34,7 @@ contract Convert is Service, BlackList {
         address tokenTo_,
         uint course_,
         uint startBlock_,
-        uint removeBlocks_,
+        uint endBlock_,
         address controller_,
         address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
@@ -49,7 +49,7 @@ contract Convert is Service, BlackList {
         require(
             course_ != 0
             && startBlock_ != 0
-            && removeBlocks_ != 0,
+            && endBlock_ != 0,
             "Convert::Constructor: num is 0"
         );
 
@@ -61,7 +61,7 @@ contract Convert is Service, BlackList {
 
         course = course_;
         startBlock = startBlock_;
-        removeBlocks = removeBlocks_;
+        endBlock = endBlock_;
     }
 
     function addTokenAmount(uint amount) public onlyOwner returns (bool) {
@@ -71,7 +71,7 @@ contract Convert is Service, BlackList {
     }
 
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
-        require((checkpoints[checkpoints.length - 1].toBlock + removeBlocks) < block.number, "Convert::removeUnusedToken: bad timing for the request");
+        require(endBlock > block.number, "Convert::removeUnusedToken: bad timing for the request");
 
         doTransferOut(tokenTo, msg.sender, amount);
 

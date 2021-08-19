@@ -8,7 +8,7 @@ contract Compensation is Service, BlackList {
 
     address public stableCoin;
     uint public startBlock;
-    uint public removeBlocks;
+    uint public endBlock;
 
     mapping(address => uint) public pTokens;
 
@@ -22,7 +22,7 @@ contract Compensation is Service, BlackList {
     constructor(
         address stableCoin_,
         uint startBlock_,
-        uint removeBlocks_,
+        uint endBlock_,
         address controller_,
         address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
@@ -35,7 +35,7 @@ contract Compensation is Service, BlackList {
 
         require(
             startBlock_ != 0
-            && removeBlocks_ != 0,
+            && endBlock_ != 0,
             "Compensation::Constructor: block num is 0"
         );
 
@@ -47,7 +47,7 @@ contract Compensation is Service, BlackList {
         stableCoin = stableCoin_;
 
         startBlock = startBlock_;
-        removeBlocks = removeBlocks_;
+        endBlock = endBlock_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
@@ -63,7 +63,7 @@ contract Compensation is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(startBlock + removeBlocks < block.number, "Compensation::removeUnused: bad timing for the request");
+        require(endBlock > block.number, "Compensation::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 

@@ -21,18 +21,18 @@ async function main() {
     // compensation
     let compensation_stableCoin;
     let compensation_startBlock;
-    let compensation_removeBlocks;
+    let compensation_endBlock;
 
     // convert
     let convert_pTokenFrom;
     let convert_tokenTo;
     let convert_course;
     let convert_startBlock;
-    let convert_removeBlocks;
+    let convert_endBlock;
 
     // refund
     let refund_startBlock;
-    let refund_removeBlocks;
+    let refund_endBlock;
 
     if (network === 'hardhat') {
         const Mock = await hre.ethers.getContractFactory("Mock");
@@ -53,7 +53,7 @@ async function main() {
 
         compensation_stableCoin = stable.address;
         compensation_startBlock = '10';
-        compensation_removeBlocks = '100';
+        compensation_endBlock = '100';
 
         amount = '100000000000000000000';
         const pToken = await ERC20Token.deploy(
@@ -77,10 +77,10 @@ async function main() {
         convert_course = '20000000000000000'; // 0.02e18
 
         convert_startBlock = '10';
-        convert_removeBlocks = '100';
+        convert_endBlock = '100';
 
         refund_startBlock = '10';
-        refund_removeBlocks = '100';
+        refund_endBlock = '100';
 
     } else if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
@@ -88,96 +88,96 @@ async function main() {
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_RINKEBY;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_RINKEBY;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_RINKEBY;
         
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_RINKEBY;
         convert_tokenTo = process.env.TOKENTO_CONVERT_RINKEBY;
         convert_course = process.env.COURSE_CONVERT_RINKEBY;
         convert_startBlock = process.env.START_BLOCK_CONVERT_RINKEBY;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_RINKEBY;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_RINKEBY;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_RINKEBY;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_RINKEBY;
+        refund_endBlock = process.env.END_BLOCK_REFUND_RINKEBY;
     } else if (network === 'mainnet') {
         controller = process.env.CONTROLLER_MAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
 
         compensation_stableCoin = process.env.STABLECOIN_MAINNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MAINNET;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_MAINNET;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MAINNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
         convert_course = process.env.COURSE_CONVERT_MAINNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_MAINNET;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_MAINNET;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_MAINNET;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_MAINNET;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_MAINNET;
+        refund_endBlock = process.env.END_BLOCK_REFUND_MAINNET;
     } else if (network === 'bsctestnet') {
         controller = process.env.CONTROLLER_BSCTESTNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCTESTNET;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCTESTNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCTESTNET;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_BSCTESTNET;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCTESTNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCTESTNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCTESTNET;
         convert_course = process.env.COURSE_CONVERT_BSCTESTNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_BSCTESTNET;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_BSCTESTNET;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_BSCTESTNET;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_BSCTESTNET;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_BSCTESTNET;
+        refund_endBlock = process.env.END_BLOCK_REFUND_BSCTESTNET;
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCMAINNET;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_BSCMAINNET;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCMAINNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCMAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCMAINNET;
         convert_course = process.env.COURSE_CONVERT_BSCMAINNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_BSCMAINNET;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_BSCMAINNET;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_BSCMAINNET;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_BSCMAINNET;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_BSCMAINNET;
+        refund_endBlock = process.env.END_BLOCK_REFUND_BSCMAINNET;
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
         ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
 
         compensation_stableCoin = process.env.STABLECOIN_MUMBAI;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MUMBAI;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_MUMBAI;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MUMBAI;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MUMBAI;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MUMBAI;
         convert_course = process.env.COURSE_CONVERT_MUMBAI;
         convert_startBlock = process.env.START_BLOCK_CONVERT_MUMBAI;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_MUMBAI;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_MUMBAI;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_MUMBAI;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_MUMBAI;
+        refund_endBlock = process.env.END_BLOCK_REFUND_MUMBAI;
     } else if (network === 'polygon') {
         controller = process.env.CONTROLLER_POLYGON;
         ETHUSDPriceFeed = process.env.PRICEFEED_POLYGON;
 
         compensation_stableCoin = process.env.STABLECOIN_POLYGON;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_POLYGON;
-        compensation_removeBlocks = process.env.REMOVE_BLOCK_COMPENSATION_POLYGON;
+        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_POLYGON;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_POLYGON;
         convert_tokenTo = process.env.TOKENTO_CONVERT_POLYGON;
         convert_course = process.env.COURSE_CONVERT_POLYGON;
         convert_startBlock = process.env.START_BLOCK_CONVERT_POLYGON;
-        convert_removeBlocks = process.env.REMOVE_BLOCK__CONVERT_POLYGON;
+        convert_endBlock = process.env.END_BLOCK__CONVERT_POLYGON;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_POLYGON;
-        refund_removeBlocks = process.env.REMOVE_BLOCK_REFUND_POLYGON;
+        refund_endBlock = process.env.END_BLOCK_REFUND_POLYGON;
     } else {
         console.log("Bad network");
     }
@@ -185,7 +185,7 @@ async function main() {
     const compensation = await Compensation.deploy(
         compensation_stableCoin,
         compensation_startBlock,
-        compensation_removeBlocks,
+        compensation_endBlock,
         controller,
         ETHUSDPriceFeed,
     );
@@ -196,7 +196,7 @@ async function main() {
         convert_tokenTo,
         convert_course,
         convert_startBlock,
-        convert_removeBlocks,
+        convert_endBlock,
         controller,
         ETHUSDPriceFeed
     );
@@ -204,7 +204,7 @@ async function main() {
 
     const refund = await Refund.deploy(
         refund_startBlock,
-        refund_removeBlocks,
+        refund_endBlock,
         controller,
         ETHUSDPriceFeed
     );
