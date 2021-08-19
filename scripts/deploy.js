@@ -35,6 +35,52 @@ async function main() {
     let refund_removeBlocks;
 
     if (network === 'hardhat') {
+        const Mock = await hre.ethers.getContractFactory("Mock");
+        const mock = await Mock.deploy();
+        console.log("Mock deployed to:", mock.address);
+
+        controller = mock.address;
+        ETHUSDPriceFeed = mock.address;
+
+        const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        let amount = '100000000000000000000';
+        const stable = await ERC20Token.deploy(
+            amount,
+            'USDT',
+            'USDT'
+        );
+        console.log("Stable deployed to:", stable.address);
+
+        compensation_stableCoin = stable.address;
+        compensation_startBlock = '10';
+        compensation_removeBlocks = '100';
+
+        amount = '100000000000000000000';
+        const pToken = await ERC20Token.deploy(
+            amount,
+            'pToken1',
+            'pToken1'
+        );
+        console.log("PToken deployed to:", pToken.address);
+
+        convert_pTokenFrom = pToken.address;
+
+        amount = '100000000000000000000';
+        const tokenTo = await ERC20Token.deploy(
+            amount,
+            'tokenTo',
+            'tokenTo'
+        );
+        console.log("TokenTo deployed to:", tokenTo.address);
+
+        convert_tokenTo = tokenTo.address;
+        convert_course = '20000000000000000'; // 0.02e18
+
+        convert_startBlock = '10';
+        convert_removeBlocks = '100';
+
+        refund_startBlock = '10';
+        refund_removeBlocks = '100';
 
     } else if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;

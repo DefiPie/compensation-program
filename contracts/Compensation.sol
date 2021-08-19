@@ -27,7 +27,9 @@ contract Compensation is Service, BlackList {
         address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
-            stableCoin != address(0),
+            stableCoin_ != address(0)
+            && controller_ != address(0)
+            && ETHUSDPriceFeed_ != address(0),
             "Compensation::Constructor: address is 0"
         );
 
