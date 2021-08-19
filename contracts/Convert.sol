@@ -32,11 +32,11 @@ contract Convert is Service, BlackList {
     constructor(
         address pTokenFrom_,
         address tokenTo_,
-        address controller_,
-        address ETHUSDPriceFeed_,
         uint course_,
         uint startBlock_,
-        uint removeBlocks_
+        uint removeBlocks_,
+        address controller_,
+        address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             pTokenFrom_ != address(0)
