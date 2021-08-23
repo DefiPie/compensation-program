@@ -18,6 +18,8 @@ contract Refund is Service, BlackList {
     }
 
     mapping(address => mapping(address => Balance)) public balances;
+    mapping(address => uint[]) public checkpoints;
+    mapping(address => uint) public totalAmount;
 
     constructor(
         uint startBlock_,
@@ -48,7 +50,11 @@ contract Refund is Service, BlackList {
     }
 
     function addTokenAmount(address baseToken, uint baseTokenAmount) public onlyOwner returns (bool) {
-        doTransferIn(msg.sender, baseToken, baseTokenAmount);
+        uint amountIn = doTransferIn(msg.sender, baseToken, baseTokenAmount);
+
+        if (amountIn > 0 ) {
+            checkpoints[baseToken].push(amountIn);
+        }
 
         return true;
     }
@@ -68,6 +74,7 @@ contract Refund is Service, BlackList {
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
         balances[msg.sender][pToken].amount += calcRefundAmount(pToken, amount);
+        totalAmount[pToken] += amount;
 
         return true;
     }
@@ -83,7 +90,7 @@ contract Refund is Service, BlackList {
         require(block.number > startBlock, "Refund::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Refund::claimToken: user in black list");
 
-        uint amount = balances[msg.sender][pToken].amount - balances[msg.sender][pToken].out;
+        uint amount = calcClaimAmount(msg.sender, pToken);
 
         balances[msg.sender][pToken].out += amount;
         address baseToken = baseTokens[pToken];
@@ -91,5 +98,22 @@ contract Refund is Service, BlackList {
         doTransferOut(baseToken, msg.sender, amount);
 
         return true;
+    }
+
+    function calcClaimAmount(address user, address pToken) public view returns (uint) {
+        uint amount = balances[user][pToken].amount;
+
+        if (amount == 0 || amount == balances[user][pToken].out) {
+            return 0;
+        }
+
+        uint claimAmount;
+        address baseToken = baseTokens[pToken];
+
+        for (uint i = 0; i < checkpoints[baseToken].length; i++) {
+            claimAmount += amount * checkpoints[baseToken][i] / totalAmount[pToken];
+        }
+
+        return claimAmount - balances[user][pToken].out;
     }
 }
