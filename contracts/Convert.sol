@@ -139,7 +139,7 @@ contract Convert is Service, BlackList {
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
 
-        if (amount == 0) {
+        if (amount == 0 || amount == balances[user].out) {
             return 0;
         }
 
@@ -161,7 +161,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].value / allBlockAmount / 100  / 1e18;
+            claimAmount += blockAmount * amount * checkpoints[i].value / allBlockAmount / 100 / 1e18;
         }
 
         return claimAmount - balances[user].out;
