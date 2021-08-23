@@ -23,7 +23,7 @@ contract Convert is Service, BlackList {
     struct Checkpoint {
         uint fromBlock;
         uint toBlock;
-        uint value; // for example 10e18 is 10%
+        uint percent; // for example 10e18 is 10%
     }
 
     // num => block => value
@@ -78,7 +78,7 @@ contract Convert is Service, BlackList {
         return true;
     }
 
-    function addCheckpoint(uint fromBlock_, uint toBlock_, uint value_) public onlyOwner returns (bool) {
+    function addCheckpoint(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
         require(block.number < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
         require(startBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
         require(toBlock_ < endBlock, "Convert::addCheckpoint: block value toBlock must be less than end block");
@@ -91,7 +91,7 @@ contract Convert is Service, BlackList {
         Checkpoint memory cp;
         cp.fromBlock = fromBlock_;
         cp.toBlock = toBlock_;
-        cp.value = value_;
+        cp.percent = percent_;
 
         checkpoints.push(cp);
 
@@ -161,7 +161,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].value / allBlockAmount / 100 / 1e18;
+            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100 / 1e18;
         }
 
         return claimAmount - balances[user].out;
