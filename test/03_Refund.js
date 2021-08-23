@@ -37,7 +37,7 @@ describe("Refund", function () {
         console.log("Refund deployed to:", refund.address);
     });
 
-    describe('Transactions', async () => {
+    describe('Constructor', async () => {
         it('check deploy data', async () => {
             const [startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
                 refund.startBlock(),
@@ -50,6 +50,17 @@ describe("Refund", function () {
             expect(endBlock).to.be.equal(refund_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+        });
+    });
+
+    describe('Transactions', async () => {
+        it('check data', async () => {
+            // 1. deploy contract
+            // 2. add token
+            // 3. add 3 checkpoint
+            // 4. 3 users call convert
+            // 5. claimToken
+            // 6. remove unused tokens
         });
     });
 });

@@ -64,7 +64,7 @@ describe("Convert", function () {
         console.log("Convert deployed to:", convert.address);
     });
 
-    describe('Transactions', async () => {
+    describe('Constructor', async () => {
         it('check deploy data', async () => {
             const [pTokenFrom, tokenTo, course, startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
                 convert.pTokenFrom(),
@@ -83,6 +83,17 @@ describe("Convert", function () {
             expect(endBlock).to.be.equal(convert_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+        });
+    });
+
+    describe('Transactions', async () => {
+        it('check data', async () => {
+            // 1. deploy contract
+            // 2. add token
+            // 3. add 3 checkpoint
+            // 4. 3 users call convert
+            // 5. claimToken
+            // 6. remove unused tokens
         });
     });
 });

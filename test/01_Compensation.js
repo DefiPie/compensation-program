@@ -49,7 +49,7 @@ describe("Compensation", function () {
         console.log("Compensation deployed to:", compensation.address);
     });
 
-    describe('Transactions', async () => {
+    describe('Constructor', async () => {
         it('check deploy data', async () => {
             const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
                 compensation.stableCoin(),
@@ -66,4 +66,16 @@ describe("Compensation", function () {
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
         });
     });
+
+    describe('Transactions', async () => {
+        it('check data', async () => {
+            // 1. deploy contract
+            // 2. add pToken
+            // 3. add 3 checkpoint
+            // 4. 3 users call compensation
+            // 5. claim
+            // 6. remove unused tokens
+        });
+    });
+
 });
