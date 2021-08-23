@@ -18,6 +18,8 @@ contract Compensation is Service, BlackList {
     }
 
     mapping(address => Balance) public balances;
+    uint[] public checkpoints;
+    uint public totalAmount;
 
     constructor(
         address stableCoin_,
@@ -56,8 +58,12 @@ contract Compensation is Service, BlackList {
         return true;
     }
 
-    function addStableCoinAmount(uint amount) public onlyOwner returns (bool) {
-        doTransferIn(msg.sender, stableCoin, amount);
+    function addCheckpoint(uint stableCoinAmount) public onlyOwner returns (bool) {
+        uint amountIn = doTransferIn(msg.sender, stableCoin, stableCoinAmount);
+
+        if (amountIn > 0 ) {
+            checkpoints.push(amountIn);
+        }
 
         return true;
     }
@@ -77,6 +83,7 @@ contract Compensation is Service, BlackList {
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
         balances[msg.sender].amount += calcCompensationAmount(pToken, amount);
+        totalAmount += amount;
 
         return true;
     }
@@ -91,12 +98,28 @@ contract Compensation is Service, BlackList {
         require(block.number > startBlock, "Compensation::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Compensation::claimToken: user in black list");
 
-        uint amount = balances[msg.sender].amount - balances[msg.sender].out;
+        uint amount = calcClaimAmount(msg.sender);
 
         balances[msg.sender].out += amount;
 
         doTransferOut(stableCoin, msg.sender, amount);
 
         return true;
+    }
+
+    function calcClaimAmount(address user) public view returns (uint) {
+        uint amount = balances[user].amount;
+
+        if (amount == 0 || amount == balances[user].out) {
+            return 0;
+        }
+
+        uint claimAmount;
+
+        for (uint i = 0; i < checkpoints.length; i++) {
+            claimAmount += amount * checkpoints[i] / totalAmount;
+        }
+
+        return claimAmount - balances[user].out;
     }
 }
