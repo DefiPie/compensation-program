@@ -3,6 +3,7 @@ const { ethers } = require('hardhat');
 
 describe("Compensation", function () {
     let compensation, Compensation;
+    let mock, Mock, ERC20Token;
 
     let controller;
     let ETHUSDPriceFeed;
@@ -13,15 +14,21 @@ describe("Compensation", function () {
 
     let owner;
 
+    before(async () => {
+        Mock = await hre.ethers.getContractFactory("Mock");
+        ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        Compensation = await hre.ethers.getContractFactory("Compensation");
+
+        [owner] = await ethers.getSigners();
+    });
+
     beforeEach(async () => {
-        const Mock = await hre.ethers.getContractFactory("Mock");
-        const mock = await Mock.deploy();
+        mock = await Mock.deploy();
         console.log("Mock deployed to:", mock.address);
 
         controller = mock.address;
         ETHUSDPriceFeed = mock.address;
 
-        const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         let amount = '100000000000000000000';
         const stable = await ERC20Token.deploy(
             amount,
@@ -31,9 +38,6 @@ describe("Compensation", function () {
         console.log("Stable deployed to:", stable.address);
 
         compensation_stableCoin = stable.address;
-        [owner] = await ethers.getSigners();
-
-        Compensation = await hre.ethers.getContractFactory("Compensation");
 
         compensation = await Compensation.deploy(
             compensation_stableCoin,
