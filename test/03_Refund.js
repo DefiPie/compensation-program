@@ -52,6 +52,61 @@ describe("Refund", function () {
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
         });
+
+        it('check init data', async () => {
+            await expect(
+                Refund.deploy(
+                    '0',
+                    refund_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.refundConstructorBlockNumIs0);
+
+            await expect(
+                Refund.deploy(
+                    refund_startBlock,
+                    '0',
+                    controller,
+                    ETHUSDPriceFeed,
+                )
+            ).to.be.revertedWith(revertMessages.refundConstructorBlockNumIs0);
+
+            await expect(
+                Refund.deploy(
+                    '200',
+                    '100',
+                    controller,
+                    ETHUSDPriceFeed,
+                )
+            ).to.be.revertedWith(revertMessages.refundConstructorStartBlockMustBeMoreThanCurrentBlockAndMoreThanEndBlock);
+
+            await expect(
+                Refund.deploy(
+                    refund_startBlock,
+                    refund_endBlock,
+                    ethers.constants.AddressZero,
+                    ETHUSDPriceFeed,
+                )
+            ).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
+
+            await expect(
+                Refund.deploy(
+                    refund_startBlock,
+                    refund_endBlock,
+                    controller,
+                    ethers.constants.AddressZero,
+                )
+            ).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
+
+            await expect(
+                Refund.deploy(
+                    '1',
+                    '100',
+                    controller,
+                    ETHUSDPriceFeed,
+                )
+            ).to.be.revertedWith(revertMessages.refundConstructorStartBlockMustBeMoreThanCurrentBlockAndMoreThanEndBlock);
+        });
     });
 
     describe('Transactions', async () => {
@@ -68,8 +123,6 @@ describe("Refund", function () {
                 controller,
                 ETHUSDPriceFeed,
             );
-
-
 
             // 2. add token
             // 3. add 3 checkpoint

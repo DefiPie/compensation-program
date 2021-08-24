@@ -34,8 +34,9 @@ contract Refund is Service, BlackList {
         );
 
         require(
-            startBlock_ > block.number,
-            "Refund::Constructor: start block must be more than current block"
+            startBlock_ > block.number
+            && startBlock_ < endBlock_,
+            "Refund::Constructor: start block must be more than current block and less than end block"
         );
 
         startBlock = startBlock_;

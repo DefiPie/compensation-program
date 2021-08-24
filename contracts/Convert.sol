@@ -53,6 +53,12 @@ contract Convert is Service, BlackList {
             "Convert::Constructor: num is 0"
         );
 
+        require(
+            startBlock_ > block.number
+            && startBlock_ < endBlock_,
+            "Convert::Constructor: start block must be more than current block and less than end block"
+        );
+
         pTokenFrom = pTokenFrom_;
         tokenTo = tokenTo_;
 

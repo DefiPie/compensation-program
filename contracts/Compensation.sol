@@ -42,8 +42,9 @@ contract Compensation is Service, BlackList {
         );
 
         require(
-            startBlock_ > block.number,
-            "Compensation::Constructor: start block must be more than current block"
+            startBlock_ > block.number
+            && startBlock_ < endBlock_,
+            "Compensation::Constructor: start block must be more than current block and less than end block"
         );
 
         stableCoin = stableCoin_;
