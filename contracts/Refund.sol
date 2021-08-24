@@ -84,7 +84,7 @@ contract Refund is Service, BlackList {
         address baseToken = baseTokens[pToken];
         uint course = pTokens[pToken][baseToken];
 
-        return amount * course;
+        return amount * course / 1e18;
     }
 
     function claimToken(address pToken) public returns (bool) {
