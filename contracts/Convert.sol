@@ -79,9 +79,9 @@ contract Convert is Service, BlackList {
     }
 
     function addCheckpoint(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
-        require(block.number < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
-        require(startBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than current block");
-        require(toBlock_ < endBlock, "Convert::addCheckpoint: block value toBlock must be less than end block");
+        require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
+        require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
+        require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {

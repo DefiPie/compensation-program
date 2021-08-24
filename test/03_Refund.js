@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require('hardhat');
+const { eventsName, revertMessages } = require('./shared/enums');
 
 describe("Refund", function () {
     let refund, Refund;
@@ -56,6 +57,20 @@ describe("Refund", function () {
     describe('Transactions', async () => {
         it('check data', async () => {
             // 1. deploy contract
+            const blockNumBefore = await ethers.provider.getBlockNumber();
+
+            refund_startBlock = +blockNumBefore + 10;
+            refund_endBlock = +refund_startBlock + 100;
+
+            refund = await Refund.deploy(
+                refund_startBlock,
+                refund_endBlock,
+                controller,
+                ETHUSDPriceFeed,
+            );
+
+
+
             // 2. add token
             // 3. add 3 checkpoint
             // 4. 3 users call convert

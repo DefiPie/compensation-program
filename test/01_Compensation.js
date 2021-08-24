@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require('hardhat');
+const { eventsName, revertMessages } = require('./shared/enums');
 
 describe("Compensation", function () {
     let compensation, Compensation;
