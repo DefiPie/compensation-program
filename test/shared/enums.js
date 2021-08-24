@@ -30,7 +30,7 @@ const revertMessages = {
     refundRemoveUnusedTokenBadTimingForRequest: 'Refund::removeUnused: bad timing for the request',
     refundRefundYouCanConvertPTokensBeforeStartBlockOnly: 'Refund::refund: you can convert pTokens before start block only',
     refundRefundSumBorrowMustBeLessThan1: 'Refund::refund: sumBorrow must be less than $1',
-    refundClaimTokenUserInBlackList: 'Refund::claimToken: bad timing for the request',
+    refundClaimTokenBadTimingForRequest: 'Refund::claimToken: bad timing for the request',
     refundClaimTokenUserInBlackList: 'Refund::claimToken: user in black list',
 };
 
