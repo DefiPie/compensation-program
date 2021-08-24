@@ -50,7 +50,7 @@ contract Refund is Service, BlackList {
         return true;
     }
 
-    function addTokenAmount(address baseToken, uint baseTokenAmount) public onlyOwner returns (bool) {
+    function addTokensAndCheckpoint(address baseToken, uint baseTokenAmount) public onlyOwner returns (bool) {
         uint amountIn = doTransferIn(msg.sender, baseToken, baseTokenAmount);
 
         if (amountIn > 0 ) {
@@ -116,5 +116,9 @@ contract Refund is Service, BlackList {
         }
 
         return claimAmount - balances[user][pToken].out;
+    }
+
+    function getCheckpointsLength(address baseToken_) public view returns (uint) {
+        return checkpoints[baseToken_].length;
     }
 }

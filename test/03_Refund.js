@@ -184,7 +184,31 @@ describe("Refund", function () {
             expect(contractCourse2).to.be.equal(course2);
             expect(contractCourse3).to.be.equal(course3);
 
-            // 3. add 3 checkpoint
+            // 3. add 3 token refund amount
+            let baseTokenAmount1 = '100000000000000000000'; // 100e18
+            let baseTokenAmount2 = '300000000000000000000'; // 300e18
+            let baseTokenAmount3 = '700000000000000000000'; // 700e18
+
+            await expect(
+                refund.connect(accounts[0]).addTokensAndCheckpoint(baseToken1.address, baseTokenAmount1)
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            await baseToken1.approve(refund.address, baseTokenAmount1);
+
+            const ownerBalanceBefore = await baseToken1.balanceOf(owner.address);
+            const refundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
+
+            await refund.addTokensAndCheckpoint(baseToken1.address, baseTokenAmount1);
+
+            const ownerBalanceAfter = await baseToken1.balanceOf(owner.address);
+            const refundBalanceAfter = await baseToken1.balanceOf(refund.address);
+
+            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(amount);
+            expect(refundBalanceAfter.sub(refundContractBalanceBefore).toString()).to.be.equal(amount);
+
+            let checkpointLength = await refund.getCheckpointsLength(baseToken1.address);
+            expect(checkpointLength).to.be.equal(1);
+
             // 4. 3 users call convert
             // 5. claimToken
             // 6. remove unused tokens

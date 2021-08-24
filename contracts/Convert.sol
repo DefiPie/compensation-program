@@ -173,7 +173,7 @@ contract Convert is Service, BlackList {
         return claimAmount - balances[user].out;
     }
 
-    function getCheckpointLength() public view returns (uint) {
+    function getCheckpointsLength() public view returns (uint) {
         return checkpoints.length;
     }
 }

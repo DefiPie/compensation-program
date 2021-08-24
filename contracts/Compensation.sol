@@ -123,4 +123,8 @@ contract Compensation is Service, BlackList {
 
         return claimAmount - balances[user].out;
     }
+
+    function getCheckpointsLength() public view returns (uint) {
+        return checkpoints.length;
+    }
 }
