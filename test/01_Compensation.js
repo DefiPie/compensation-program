@@ -12,14 +12,14 @@ describe("Compensation", function () {
     let compensation_startBlock = '10';
     let compensation_endBlock = '100';
 
-    let owner;
+    let owner, accounts;
 
     before(async () => {
         Mock = await hre.ethers.getContractFactory("Mock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         Compensation = await hre.ethers.getContractFactory("Compensation");
 
-        [owner] = await ethers.getSigners();
+        [owner, ...accounts] = await ethers.getSigners();
     });
 
     beforeEach(async () => {

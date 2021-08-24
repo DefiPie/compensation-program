@@ -11,14 +11,14 @@ describe("Refund", function () {
     let refund_startBlock = '10';
     let refund_endBlock = '100';
 
-    let owner;
+    let owner, accounts;
 
     before(async () => {
         Mock = await hre.ethers.getContractFactory("Mock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         Refund = await hre.ethers.getContractFactory("Refund");
 
-        [owner] = await ethers.getSigners();
+        [owner, ...accounts] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
