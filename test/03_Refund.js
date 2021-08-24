@@ -125,7 +125,7 @@ describe("Refund", function () {
             );
 
             // 2. add token
-            let amount = '100000000000000000000';
+            let amount = '10000000000000000000000'; // 10000e18
             const pToken1 = await ERC20Token.deploy(
                 amount,
                 'pToken1',
@@ -203,11 +203,32 @@ describe("Refund", function () {
             const ownerBalanceAfter = await baseToken1.balanceOf(owner.address);
             const refundBalanceAfter = await baseToken1.balanceOf(refund.address);
 
-            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(amount);
-            expect(refundBalanceAfter.sub(refundContractBalanceBefore).toString()).to.be.equal(amount);
+            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(baseTokenAmount1);
+            expect(refundBalanceAfter.sub(refundContractBalanceBefore).toString()).to.be.equal(baseTokenAmount1);
 
             let checkpointLength = await refund.getCheckpointsLength(baseToken1.address);
             expect(checkpointLength).to.be.equal(1);
+
+            let baseTokenCheckpoints = await refund.checkpoints(baseToken1.address, 0);
+            expect(baseTokenCheckpoints.toString()).to.be.equal(baseTokenAmount1);
+
+            await baseToken1.approve(refund.address, baseTokenAmount2);
+            await refund.addTokensAndCheckpoint(baseToken1.address, baseTokenAmount2);
+
+            checkpointLength = await refund.getCheckpointsLength(baseToken1.address);
+            expect(checkpointLength).to.be.equal(2);
+
+            baseTokenCheckpoints = await refund.checkpoints(baseToken1.address, 1);
+            expect(baseTokenCheckpoints.toString()).to.be.equal(baseTokenAmount2);
+
+            await baseToken1.approve(refund.address, baseTokenAmount3);
+            await refund.addTokensAndCheckpoint(baseToken1.address, baseTokenAmount3);
+
+            checkpointLength = await refund.getCheckpointsLength(baseToken1.address);
+            expect(checkpointLength).to.be.equal(3);
+
+            baseTokenCheckpoints = await refund.checkpoints(baseToken1.address, 2);
+            expect(baseTokenCheckpoints.toString()).to.be.equal(baseTokenAmount3);
 
             // 4. 3 users call convert
             // 5. claimToken
