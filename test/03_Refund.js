@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require('hardhat');
 const { eventsName, revertMessages } = require('./shared/enums');
+const BigNumber = require("bignumber.js");
 
 describe("Refund", function () {
     let refund, Refund;
@@ -115,7 +116,7 @@ describe("Refund", function () {
             // 1. deploy contract
             const blockNumBefore = await ethers.provider.getBlockNumber();
 
-            refund_startBlock = +blockNumBefore + 50;
+            refund_startBlock = +blockNumBefore + 90;
             refund_endBlock = +refund_startBlock + 100;
 
             refund = await Refund.deploy(
@@ -273,17 +274,58 @@ describe("Refund", function () {
             await pToken3.connect(accounts[1]).approve(refund.address, acc1amount3);
             await pToken3.connect(accounts[2]).approve(refund.address, acc2amount3);
 
+            // ==========
+            // first pool
+            // ==========
+
             const pToken1Acc0BalanceBefore = await pToken1.balanceOf(accounts[0].address);
-            const pToken1RefundContractBalanceBefore = await pToken1.balanceOf(refund.address);
+            let pToken1RefundContractBalanceBefore = await pToken1.balanceOf(refund.address);
 
             await refund.connect(accounts[0]).refund(pToken1.address, acc0amount1);
 
             const pToken1Acc0BalanceAfter = await pToken1.balanceOf(accounts[0].address);
-            const pToken1RefundBalanceAfter = await pToken1.balanceOf(refund.address);
+            let pToken1RefundBalanceAfter = await pToken1.balanceOf(refund.address);
 
             expect(pToken1Acc0BalanceBefore.sub(pToken1Acc0BalanceAfter).toString()).to.be.equal(acc0amount1);
             expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc0amount1);
 
+            const pToken1Acc1BalanceBefore = await pToken1.balanceOf(accounts[1].address);
+            pToken1RefundContractBalanceBefore = await pToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[1]).refund(pToken1.address, acc1amount1);
+
+            const pToken1Acc1BalanceAfter = await pToken1.balanceOf(accounts[1].address);
+            pToken1RefundBalanceAfter = await pToken1.balanceOf(refund.address);
+
+            expect(pToken1Acc1BalanceBefore.sub(pToken1Acc1BalanceAfter).toString()).to.be.equal(acc1amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc1amount1);
+
+            const pToken1Acc2BalanceBefore = await pToken1.balanceOf(accounts[2].address);
+            pToken1RefundContractBalanceBefore = await pToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[2]).refund(pToken1.address, acc2amount1);
+
+            const pToken1Acc2BalanceAfter = await pToken1.balanceOf(accounts[2].address);
+            pToken1RefundBalanceAfter = await pToken1.balanceOf(refund.address);
+
+            expect(pToken1Acc2BalanceBefore.sub(pToken1Acc2BalanceAfter).toString()).to.be.equal(acc2amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc2amount1);
+
+            // ===========
+            // second pool
+            // ===========
+            let pToken2RefundBalanceBefore = await pToken2.balanceOf(refund.address);
+
+            await refund.connect(accounts[0]).refund(pToken2.address, acc0amount2);
+            await refund.connect(accounts[1]).refund(pToken2.address, acc1amount2);
+            await refund.connect(accounts[2]).refund(pToken2.address, acc2amount2);
+
+            let pToken2RefundBalanceAfter = await pToken2.balanceOf(refund.address);
+            let sum0 = new BigNumber(acc0amount2);
+            let sum1 = new BigNumber(acc1amount2);
+            let sum2 = new BigNumber(acc2amount2);
+
+            expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).plus(sum2).toFixed());
 
             // 5. claimToken
             // 6. remove unused tokens
@@ -299,8 +341,6 @@ describe("Refund", function () {
             await expect(
                 refund.refund(pToken1.address, acc0amount1)
             ).to.be.revertedWith(revertMessages.refundRefundYouCanConvertPTokensBeforeStartBlockOnly);
-
-
         });
     });
 });
