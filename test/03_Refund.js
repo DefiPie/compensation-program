@@ -115,7 +115,7 @@ describe("Refund", function () {
             // 1. deploy contract
             const blockNumBefore = await ethers.provider.getBlockNumber();
 
-            refund_startBlock = +blockNumBefore + 10;
+            refund_startBlock = +blockNumBefore + 50;
             refund_endBlock = +refund_startBlock + 100;
 
             refund = await Refund.deploy(
@@ -126,7 +126,7 @@ describe("Refund", function () {
             );
 
             // 2. add token
-            let amount = '10000000000000000000000'; // 10000e18
+            let amount = '1000000000000000000000000'; // 1000000e18
             const pToken1 = await MockPToken.deploy(
                 amount,
                 'pToken1',
@@ -163,9 +163,9 @@ describe("Refund", function () {
                 'baseToken3'
             );
 
-            let course1 = '20000000000000000'; // 2e16, 1 baseToken = 50 pToken
-            let course2 = '20408163000000000'; // 20408163e9, 1 baseToken = 49 pToken
-            let course3 = '19607843000000000'; // 19607843e9, 1 baseToken = 51 pToken
+            let course1 = '20000000000000000'; // 2e16, 1 baseToken1 = 50 pToken1
+            let course2 = '20408163000000000'; // 20408163e9, 1 baseToken2 = 49 pToken2
+            let course3 = '19607843000000000'; // 19607843e9, 1 baseToken3 = 51 pToken3
 
             await expect(
                 refund.connect(accounts[0]).addRefundPair(pToken1.address, baseToken1.address, course1)
@@ -233,11 +233,74 @@ describe("Refund", function () {
 
             // 4. 3 users call convert
 
+            await mainMock.addPToken(pToken1.address);
+            await mainMock.addPToken(pToken2.address);
+            await mainMock.addPToken(pToken3.address);
 
+            let acc0amount1 =  '950000000000000000000'; //  19e18 * 50
+            let acc1amount1 = '1550000000000000000000'; //  31e18 * 50
+            let acc2amount1 = '2500000000000000000000'; //  50e18 * 50
+
+            let acc0amount2 = '2793000000000000000000'; //  57e18 * 49
+            let acc1amount2 = '4557000000000000000000'; //  93e18 * 49
+            let acc2amount2 = '7350000000000000000000'; // 150e18 * 49
+
+            let acc0amount3 =  '6783000000000000000000'; // 133e18 * 51
+            let acc1amount3 = '11067000000000000000000'; // 217e18 * 51
+            let acc2amount3 = '17850000000000000000000'; // 350e18 * 51
+
+            await pToken1.transfer(accounts[0].address, acc0amount1);
+            await pToken1.transfer(accounts[1].address, acc1amount1);
+            await pToken1.transfer(accounts[2].address, acc2amount1);
+
+            await pToken2.transfer(accounts[0].address, acc0amount2);
+            await pToken2.transfer(accounts[1].address, acc1amount2);
+            await pToken2.transfer(accounts[2].address, acc2amount2);
+
+            await pToken3.transfer(accounts[0].address, acc0amount3);
+            await pToken3.transfer(accounts[1].address, acc1amount3);
+            await pToken3.transfer(accounts[2].address, acc2amount3);
+
+            await pToken1.connect(accounts[0]).approve(refund.address, acc0amount1);
+            await pToken1.connect(accounts[1]).approve(refund.address, acc1amount1);
+            await pToken1.connect(accounts[2]).approve(refund.address, acc2amount1);
+
+            await pToken2.connect(accounts[0]).approve(refund.address, acc0amount2);
+            await pToken2.connect(accounts[1]).approve(refund.address, acc1amount2);
+            await pToken2.connect(accounts[2]).approve(refund.address, acc2amount2);
+
+            await pToken3.connect(accounts[0]).approve(refund.address, acc0amount3);
+            await pToken3.connect(accounts[1]).approve(refund.address, acc1amount3);
+            await pToken3.connect(accounts[2]).approve(refund.address, acc2amount3);
+
+            const pToken1Acc0BalanceBefore = await pToken1.balanceOf(accounts[0].address);
+            const pToken1RefundContractBalanceBefore = await pToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[0]).refund(pToken1.address, acc0amount1);
+
+            const pToken1Acc0BalanceAfter = await pToken1.balanceOf(accounts[0].address);
+            const pToken1RefundBalanceAfter = await pToken1.balanceOf(refund.address);
+
+            expect(pToken1Acc0BalanceBefore.sub(pToken1Acc0BalanceAfter).toString()).to.be.equal(acc0amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc0amount1);
 
 
             // 5. claimToken
             // 6. remove unused tokens
+
+            // 7. refund after
+            await pToken1.transfer(accounts[0].address, acc0amount1);
+            await pToken1.connect(accounts[0]).approve(refund.address, acc0amount1);
+
+            for (let i = 0; i < 100; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            await expect(
+                refund.refund(pToken1.address, acc0amount1)
+            ).to.be.revertedWith(revertMessages.refundRefundYouCanConvertPTokensBeforeStartBlockOnly);
+
+
         });
     });
 });
