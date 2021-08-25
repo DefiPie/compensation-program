@@ -6,7 +6,7 @@ import "../Services/Interfaces.sol";
 contract MainMock {
     address[] public assets;
     mapping(address => uint) public prices;
-    int256 public ethPrice;
+    int256 public ethPrice = 313899000000;
 
     // controller function
     function getAssetsIn(address account) external view returns (address[] memory) {
@@ -36,7 +36,7 @@ contract MainMock {
         return ethPrice;
     }
 
-    function getUnderlyingPrice(int ethPrice_) external {
+    function setLatestAnswere(int ethPrice_) external {
         ethPrice = ethPrice_;
     }
 

@@ -318,14 +318,19 @@ describe("Refund", function () {
 
             await refund.connect(accounts[0]).refund(pToken2.address, acc0amount2);
             await refund.connect(accounts[1]).refund(pToken2.address, acc1amount2);
-            await refund.connect(accounts[2]).refund(pToken2.address, acc2amount2);
+
+            await pToken2.setBorrowBalanceStored('1000000000');
+            await mainMock.setUnderlyingPrice(pToken2.address, '1000000000000000000');
+
+            await expect(
+                refund.connect(accounts[2]).refund(pToken2.address, acc2amount2)
+            ).to.be.revertedWith(revertMessages.refundRefundSumBorrowMustBeLessThan1);
 
             let pToken2RefundBalanceAfter = await pToken2.balanceOf(refund.address);
             let sum0 = new BigNumber(acc0amount2);
             let sum1 = new BigNumber(acc1amount2);
-            let sum2 = new BigNumber(acc2amount2);
 
-            expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).plus(sum2).toFixed());
+            expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claimToken
             // 6. remove unused tokens
