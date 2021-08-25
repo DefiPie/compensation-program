@@ -3,22 +3,12 @@ pragma solidity ^0.8.4;
 
 import "../Services/Interfaces.sol";
 
-contract Mock {
-    uint public borrowBalance;
+contract MainMock {
     address[] public assets;
     mapping(address => uint) public prices;
     int256 public ethPrice;
 
     // controller function
-    function borrowBalanceStored(address account) external view returns (uint) {
-        account; // remove warnings
-        return borrowBalance;
-    }
-
-    function borrowBalanceStored(uint borrowBalance_) external {
-        borrowBalance = borrowBalance_;
-    }
-
     function getAssetsIn(address account) external view returns (address[] memory) {
         account; // remove warnings
         return assets;

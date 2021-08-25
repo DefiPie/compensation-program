@@ -4,7 +4,7 @@ const { eventsName, revertMessages } = require('./shared/enums');
 
 describe("Refund", function () {
     let refund, Refund;
-    let mock, Mock, ERC20Token;
+    let mainMock, MainMock, ERC20Token, MockPToken;
 
     let controller;
     let ETHUSDPriceFeed;
@@ -15,19 +15,20 @@ describe("Refund", function () {
     let owner, accounts;
 
     before(async () => {
-        Mock = await hre.ethers.getContractFactory("Mock");
+        MainMock = await hre.ethers.getContractFactory("MainMock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        MockPToken = await hre.ethers.getContractFactory("MockPToken");
         Refund = await hre.ethers.getContractFactory("Refund");
 
         [owner, ...accounts] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        mock = await Mock.deploy();
-        console.log("Mock deployed to:", mock.address);
+        mainMock = await MainMock.deploy();
+        console.log("MainMock deployed to:", mainMock.address);
 
-        controller = mock.address;
-        ETHUSDPriceFeed = mock.address;
+        controller = mainMock.address;
+        ETHUSDPriceFeed = mainMock.address;
 
         refund = await Refund.deploy(
             refund_startBlock,
@@ -126,7 +127,7 @@ describe("Refund", function () {
 
             // 2. add token
             let amount = '10000000000000000000000'; // 10000e18
-            const pToken1 = await ERC20Token.deploy(
+            const pToken1 = await MockPToken.deploy(
                 amount,
                 'pToken1',
                 'pToken1'
@@ -138,7 +139,7 @@ describe("Refund", function () {
                 'baseToken1'
             );
 
-            const pToken2 = await ERC20Token.deploy(
+            const pToken2 = await MockPToken.deploy(
                 amount,
                 'pToken2',
                 'pToken2'
@@ -150,7 +151,7 @@ describe("Refund", function () {
                 'baseToken2'
             );
 
-            const pToken3 = await ERC20Token.deploy(
+            const pToken3 = await MockPToken.deploy(
                 amount,
                 'pToken3',
                 'pToken3'
@@ -231,6 +232,10 @@ describe("Refund", function () {
             expect(baseTokenCheckpoints.toString()).to.be.equal(baseTokenAmount3);
 
             // 4. 3 users call convert
+
+
+
+
             // 5. claimToken
             // 6. remove unused tokens
         });
