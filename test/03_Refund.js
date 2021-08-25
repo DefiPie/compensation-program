@@ -10,8 +10,8 @@ describe("Refund", function () {
     let controller;
     let ETHUSDPriceFeed;
 
-    let refund_startBlock = '10';
-    let refund_endBlock = '100';
+    let refund_startBlock;
+    let refund_endBlock;
 
     let owner, accounts;
 
@@ -30,6 +30,10 @@ describe("Refund", function () {
 
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
+
+        let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+        refund_startBlock = 10 + currentBlockNumBefore;
+        refund_endBlock = 100 + currentBlockNumBefore;
 
         refund = await Refund.deploy(
             refund_startBlock,
@@ -333,6 +337,12 @@ describe("Refund", function () {
             expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claimToken
+            let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < refund_startBlock - currentBlockNumBefore.toString(); i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
             // 6. remove unused tokens
 
             // 7. refund after
@@ -346,6 +356,10 @@ describe("Refund", function () {
             await expect(
                 refund.refund(pToken1.address, acc0amount1)
             ).to.be.revertedWith(revertMessages.refundRefundYouCanConvertPTokensBeforeStartBlockOnly);
+        });
+
+        it('calc refund amount', async () => {
+
         });
     });
 });
