@@ -45,7 +45,7 @@ contract Refund is Service, BlackList {
 
     function addRefundPair(address pToken, address baseToken, uint course) public onlyOwner returns (bool) {
         pTokens[pToken][baseToken] = course;
-        baseTokens[baseToken] = pToken;
+        baseTokens[pToken] = baseToken;
 
         return true;
     }
@@ -61,7 +61,7 @@ contract Refund is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endBlock > block.number, "Refund::removeUnused: bad timing for the request");
+        require(endBlock < block.number, "Refund::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -72,10 +72,12 @@ contract Refund is Service, BlackList {
         require(block.number < startBlock, "Refund::refund: you can convert pTokens before start block only");
         require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
 
-        uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
+        uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
 
-        balances[msg.sender][pToken].amount += calcRefundAmount(pToken, amount);
-        totalAmount[pToken] += amount;
+        address baseToken = baseTokens[pToken];
+        uint baseTokenAmount = calcRefundAmount(pToken, pTokenAmountIn);
+        balances[msg.sender][baseToken].amount += baseTokenAmount;
+        totalAmount[baseToken] += baseTokenAmount;
 
         return true;
     }
@@ -93,8 +95,8 @@ contract Refund is Service, BlackList {
 
         uint amount = calcClaimAmount(msg.sender, pToken);
 
-        balances[msg.sender][pToken].out += amount;
         address baseToken = baseTokens[pToken];
+        balances[msg.sender][baseToken].out += amount;
 
         doTransferOut(baseToken, msg.sender, amount);
 
@@ -102,20 +104,20 @@ contract Refund is Service, BlackList {
     }
 
     function calcClaimAmount(address user, address pToken) public view returns (uint) {
-        uint amount = balances[user][pToken].amount;
+        address baseToken = baseTokens[pToken];
+        uint amount = balances[user][baseToken].amount;
 
-        if (amount == 0 || amount == balances[user][pToken].out) {
+        if (amount == 0 || amount == balances[user][baseToken].out) {
             return 0;
         }
 
         uint claimAmount;
-        address baseToken = baseTokens[pToken];
 
         for (uint i = 0; i < checkpoints[baseToken].length; i++) {
-            claimAmount += amount * checkpoints[baseToken][i] / totalAmount[pToken];
+            claimAmount += amount * checkpoints[baseToken][i] / totalAmount[baseToken];
         }
 
-        return claimAmount - balances[user][pToken].out;
+        return claimAmount - balances[user][baseToken].out;
     }
 
     function getCheckpointsLength(address baseToken_) public view returns (uint) {

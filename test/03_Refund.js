@@ -337,13 +337,85 @@ describe("Refund", function () {
             expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claimToken
+            let amount1 = await refund.calcClaimAmount(accounts[0].address, pToken1.address);
+            expect(amount1.toString()).to.be.equal('209000000000000000000');
+
+            let amount2 = await refund.calcClaimAmount(accounts[1].address, pToken1.address);
+            expect(amount2.toString()).to.be.equal('341000000000000000000');
+
+            let amount3 = await refund.calcClaimAmount(accounts[2].address, pToken1.address);
+            expect(amount3.toString()).to.be.equal('550000000000000000000');
+
             let currentBlockNumBefore = await ethers.provider.getBlockNumber();
 
             for (let i = 0; i < refund_startBlock - currentBlockNumBefore.toString(); i++) {
                 await ethers.provider.send('evm_mine');
             }
 
+            let baseToken1Acc0BalanceBefore = await baseToken1.balanceOf(accounts[0].address);
+            let baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[0]).claimToken(pToken1.address);
+
+            let baseToken1Acc0BalanceAfter = await baseToken1.balanceOf(accounts[0].address);
+            let baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
+
+            expect(baseToken1Acc0BalanceAfter.sub(baseToken1Acc0BalanceBefore).toString()).to.be.equal('209000000000000000000');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('209000000000000000000');
+
+            baseToken1Acc0BalanceBefore = await baseToken1.balanceOf(accounts[0].address);
+            baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[0]).claimToken(pToken1.address);
+
+            baseToken1Acc0BalanceAfter = await baseToken1.balanceOf(accounts[0].address);
+            baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
+
+            expect(baseToken1Acc0BalanceAfter.sub(baseToken1Acc0BalanceBefore).toString()).to.be.equal('0');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('0');
+
+            const baseToken1Acc1BalanceBefore = await baseToken1.balanceOf(accounts[1].address);
+            baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
+
+            await refund.connect(accounts[1]).claimToken(pToken1.address);
+
+            const baseToken1Acc1BalanceAfter = await baseToken1.balanceOf(accounts[1].address);
+            baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
+
+            expect(baseToken1Acc1BalanceAfter.sub(baseToken1Acc1BalanceBefore).toString()).to.be.equal('341000000000000000000');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('341000000000000000000');
+
+            await expect(
+                refund.connect(accounts[0]).addBlackList(accounts[2].address)
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            await refund.addBlackList(accounts[2].address);
+
+            await expect(
+                refund.connect(accounts[2]).claimToken(pToken1.address)
+            ).to.be.revertedWith(revertMessages.refundClaimTokenUserInBlackList);
+
             // 6. remove unused tokens
+            await expect(
+                refund.connect(accounts[0]).removeUnused(baseToken1.address, '550000000000000000000')
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < refund_endBlock - currentBlockNumBefore.toString() + 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            const baseToken1OwnerBalanceBefore = await baseToken1.balanceOf(owner.address);
+            baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
+
+            await refund.removeUnused(baseToken1.address, '550000000000000000000');
+
+            const baseToken1OwnerBalanceAfter = await baseToken1.balanceOf(owner.address);
+            baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
+
+            expect(baseToken1OwnerBalanceAfter.sub(baseToken1OwnerBalanceBefore).toString()).to.be.equal('550000000000000000000');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('550000000000000000000');
 
             // 7. refund after
             await pToken1.transfer(accounts[0].address, acc0amount1);
@@ -359,7 +431,25 @@ describe("Refund", function () {
         });
 
         it('calc refund amount', async () => {
+            let amount = '1000000000000000000000000'; // 1000000e18
+            const pToken1 = await MockPToken.deploy(amount,'pToken1','pToken1');
+            const baseToken1 = await ERC20Token.deploy(amount,'baseToken1', 'baseToken1');
 
+            let course1 = '20000000000000000'; // 2e16, 1 baseToken1 = 50 pToken1
+            let course2 = '20408163265306122'; // 20408163e9, 1 baseToken2 = 49 pToken2
+            let course3 = '19607843137254902'; // 19607843e9, 1 baseToken3 = 51 pToken3
+
+            await refund.addRefundPair(pToken1.address, baseToken1.address, course1);
+            let amount1 = await refund.calcRefundAmount(pToken1.address, '500000000000000000000');
+            expect(amount1.toString()).to.be.equal('10000000000000000000');
+
+            await refund.addRefundPair(pToken1.address, baseToken1.address, course2);
+            let amount2 = await refund.calcRefundAmount(pToken1.address, '490000000000000000000');
+            expect(amount2.toString()).to.be.equal('9999999999999999780');
+
+            await refund.addRefundPair(pToken1.address, baseToken1.address, course3);
+            let amount3 = await refund.calcRefundAmount(pToken1.address, '510000000000000000000');
+            expect(amount3.toString()).to.be.equal('10000000000000000020');
         });
     });
 });

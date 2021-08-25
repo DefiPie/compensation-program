@@ -10,13 +10,13 @@ contract BlackList is Ownable {
 
     event RemovedBlackList(address _user);
 
-    function addBlackList (address _evilUser) public onlyOwner {
+    function addBlackList(address _evilUser) public onlyOwner {
         isBlackListed[_evilUser] = true;
 
         emit AddedBlackList(_evilUser);
     }
 
-    function removeBlackList (address _clearedUser) public onlyOwner {
+    function removeBlackList(address _clearedUser) public onlyOwner {
         isBlackListed[_clearedUser] = false;
 
         emit RemovedBlackList(_clearedUser);
