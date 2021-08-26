@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require('hardhat');
 const { eventsName, revertMessages } = require('./shared/enums');
+const BigNumber = require("bignumber.js");
 
 describe("Compensation", function () {
     let compensation, Compensation;
@@ -235,7 +236,103 @@ describe("Compensation", function () {
             expect(checkpoints.toString()).to.be.equal(stableAmount3);
 
             // 4. 3 users call compensation
+            await mainMock.addPToken(pToken1.address);
+            await mainMock.addPToken(pToken2.address);
+            await mainMock.addPToken(pToken3.address);
 
+            let acc0amount1 = '2793000000000000000000'; //  57e18 * 49
+            let acc1amount1 = '4557000000000000000000'; //  93e18 * 49
+            let acc2amount1 = '7350000000000000000000'; // 150e18 * 49
+
+            let acc0amount2 =  '950000000000000000000'; //  19e18 * 50
+            let acc1amount2 = '1550000000000000000000'; //  31e18 * 50
+            let acc2amount2 = '2500000000000000000000'; //  50e18 * 50
+
+            let acc0amount3 =  '6783000000000000000000'; // 133e18 * 51
+            let acc1amount3 = '11067000000000000000000'; // 217e18 * 51
+            let acc2amount3 = '17850000000000000000000'; // 350e18 * 51
+
+            await pToken1.transfer(accounts[0].address, acc0amount1);
+            await pToken1.transfer(accounts[1].address, acc1amount1);
+            await pToken1.transfer(accounts[2].address, acc2amount1);
+
+            await pToken2.transfer(accounts[0].address, acc0amount2);
+            await pToken2.transfer(accounts[1].address, acc1amount2);
+            await pToken2.transfer(accounts[2].address, acc2amount2);
+
+            await pToken3.transfer(accounts[0].address, acc0amount3);
+            await pToken3.transfer(accounts[1].address, acc1amount3);
+            await pToken3.transfer(accounts[2].address, acc2amount3);
+
+            await pToken1.connect(accounts[0]).approve(compensation.address, acc0amount1);
+            await pToken1.connect(accounts[1]).approve(compensation.address, acc1amount1);
+            await pToken1.connect(accounts[2]).approve(compensation.address, acc2amount1);
+
+            await pToken2.connect(accounts[0]).approve(compensation.address, acc0amount2);
+            await pToken2.connect(accounts[1]).approve(compensation.address, acc1amount2);
+            await pToken2.connect(accounts[2]).approve(compensation.address, acc2amount2);
+
+            await pToken3.connect(accounts[0]).approve(compensation.address, acc0amount3);
+            await pToken3.connect(accounts[1]).approve(compensation.address, acc1amount3);
+            await pToken3.connect(accounts[2]).approve(compensation.address, acc2amount3);
+
+            // ==========
+            // first pool
+            // ==========
+
+            const pToken1Acc0BalanceBefore = await pToken1.balanceOf(accounts[0].address);
+            let pToken1RefundContractBalanceBefore = await pToken1.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[0]).compensation(pToken1.address, acc0amount1);
+
+            const pToken1Acc0BalanceAfter = await pToken1.balanceOf(accounts[0].address);
+            let pToken1RefundBalanceAfter = await pToken1.balanceOf(compensation.address);
+
+            expect(pToken1Acc0BalanceBefore.sub(pToken1Acc0BalanceAfter).toString()).to.be.equal(acc0amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc0amount1);
+
+            const pToken1Acc1BalanceBefore = await pToken1.balanceOf(accounts[1].address);
+            pToken1RefundContractBalanceBefore = await pToken1.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[1]).compensation(pToken1.address, acc1amount1);
+
+            const pToken1Acc1BalanceAfter = await pToken1.balanceOf(accounts[1].address);
+            pToken1RefundBalanceAfter = await pToken1.balanceOf(compensation.address);
+
+            expect(pToken1Acc1BalanceBefore.sub(pToken1Acc1BalanceAfter).toString()).to.be.equal(acc1amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc1amount1);
+
+            const pToken1Acc2BalanceBefore = await pToken1.balanceOf(accounts[2].address);
+            pToken1RefundContractBalanceBefore = await pToken1.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[2]).compensation(pToken1.address, acc2amount1);
+
+            const pToken1Acc2BalanceAfter = await pToken1.balanceOf(accounts[2].address);
+            pToken1RefundBalanceAfter = await pToken1.balanceOf(compensation.address);
+
+            expect(pToken1Acc2BalanceBefore.sub(pToken1Acc2BalanceAfter).toString()).to.be.equal(acc2amount1);
+            expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc2amount1);
+
+            // ===========
+            // second pool
+            // ===========
+            let pToken2RefundBalanceBefore = await pToken2.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[0]).compensation(pToken2.address, acc0amount2);
+            await compensation.connect(accounts[1]).compensation(pToken2.address, acc1amount2);
+
+            await pToken2.setBorrowBalanceStored('1000000000');
+            await mainMock.setUnderlyingPrice(pToken2.address, '1000000000000000000');
+
+            await expect(
+                compensation.connect(accounts[2]).compensation(pToken2.address, acc2amount2)
+            ).to.be.revertedWith(revertMessages.compensationCompensationSumBorrowMustBeLessThan1);
+
+            let pToken2RefundBalanceAfter = await pToken2.balanceOf(compensation.address);
+            let sum0 = new BigNumber(acc0amount2);
+            let sum1 = new BigNumber(acc1amount2);
+
+            expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claim
             // 6. remove unused tokens
