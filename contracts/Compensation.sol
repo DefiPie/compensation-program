@@ -83,8 +83,9 @@ contract Compensation is Service, BlackList {
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
-        balances[msg.sender].amount += calcCompensationAmount(pToken, amount);
-        totalAmount += amount;
+        uint stableTokenAmount = calcCompensationAmount(pToken, amount);
+        balances[msg.sender].amount += stableTokenAmount;
+        totalAmount += stableTokenAmount;
 
         return true;
     }
@@ -92,7 +93,7 @@ contract Compensation is Service, BlackList {
     function calcCompensationAmount(address pToken, uint amount) public view returns (uint) {
         uint price = pTokens[pToken];
 
-        return amount * price;
+        return amount * price / 1e18 / 1e12; // @Todo decimals stable - decimals pToken
     }
 
     function claimToken() public returns (bool) {
@@ -121,7 +122,11 @@ contract Compensation is Service, BlackList {
             claimAmount += amount * checkpoints[i] / totalAmount;
         }
 
-        return claimAmount - balances[user].out;
+        if (claimAmount > amount) {
+            return amount - balances[user].out;
+        } else {
+            return claimAmount - balances[user].out;
+        }
     }
 
     function getCheckpointsLength() public view returns (uint) {

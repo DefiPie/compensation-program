@@ -338,13 +338,13 @@ describe("Refund", function () {
 
             // 5. claimToken
             let amount1 = await refund.calcClaimAmount(accounts[0].address, pToken1.address);
-            expect(amount1.toString()).to.be.equal('209000000000000000000');
+            expect(amount1.toString()).to.be.equal('19000000000000000000');
 
             let amount2 = await refund.calcClaimAmount(accounts[1].address, pToken1.address);
-            expect(amount2.toString()).to.be.equal('341000000000000000000');
+            expect(amount2.toString()).to.be.equal('31000000000000000000');
 
             let amount3 = await refund.calcClaimAmount(accounts[2].address, pToken1.address);
-            expect(amount3.toString()).to.be.equal('550000000000000000000');
+            expect(amount3.toString()).to.be.equal('50000000000000000000');
 
             let currentBlockNumBefore = await ethers.provider.getBlockNumber();
 
@@ -360,8 +360,8 @@ describe("Refund", function () {
             let baseToken1Acc0BalanceAfter = await baseToken1.balanceOf(accounts[0].address);
             let baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
 
-            expect(baseToken1Acc0BalanceAfter.sub(baseToken1Acc0BalanceBefore).toString()).to.be.equal('209000000000000000000');
-            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('209000000000000000000');
+            expect(baseToken1Acc0BalanceAfter.sub(baseToken1Acc0BalanceBefore).toString()).to.be.equal('19000000000000000000');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('19000000000000000000');
 
             baseToken1Acc0BalanceBefore = await baseToken1.balanceOf(accounts[0].address);
             baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
@@ -382,8 +382,8 @@ describe("Refund", function () {
             const baseToken1Acc1BalanceAfter = await baseToken1.balanceOf(accounts[1].address);
             baseToken1RefundBalanceAfter = await baseToken1.balanceOf(refund.address);
 
-            expect(baseToken1Acc1BalanceAfter.sub(baseToken1Acc1BalanceBefore).toString()).to.be.equal('341000000000000000000');
-            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('341000000000000000000');
+            expect(baseToken1Acc1BalanceAfter.sub(baseToken1Acc1BalanceBefore).toString()).to.be.equal('31000000000000000000');
+            expect(baseToken1RefundContractBalanceBefore.sub(baseToken1RefundBalanceAfter).toString()).to.be.equal('31000000000000000000');
 
             await expect(
                 refund.connect(accounts[0]).addBlackList(accounts[2].address)
@@ -397,7 +397,7 @@ describe("Refund", function () {
 
             // 6. remove unused tokens
             await expect(
-                refund.connect(accounts[0]).removeUnused(baseToken1.address, '550000000000000000000')
+                refund.connect(accounts[0]).removeUnused(baseToken1.address, '50000000000000000000')
             ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
 
             currentBlockNumBefore = await ethers.provider.getBlockNumber();

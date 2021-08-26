@@ -240,9 +240,9 @@ describe("Compensation", function () {
             await mainMock.addPToken(pToken2.address);
             await mainMock.addPToken(pToken3.address);
 
-            let acc0amount1 = '2793000000000000000000'; //  57e18 * 49
-            let acc1amount1 = '4557000000000000000000'; //  93e18 * 49
-            let acc2amount1 = '7350000000000000000000'; // 150e18 * 49
+            let acc0amount1 = '2850000000000000000000'; //  57e18 * 50
+            let acc1amount1 = '4650000000000000000000'; //  93e18 * 50
+            let acc2amount1 = '7500000000000000000000'; // 150e18 * 50
 
             let acc0amount2 =  '950000000000000000000'; //  19e18 * 50
             let acc1amount2 = '1550000000000000000000'; //  31e18 * 50
@@ -313,6 +313,15 @@ describe("Compensation", function () {
             expect(pToken1Acc2BalanceBefore.sub(pToken1Acc2BalanceAfter).toString()).to.be.equal(acc2amount1);
             expect(pToken1RefundBalanceAfter.sub(pToken1RefundContractBalanceBefore).toString()).to.be.equal(acc2amount1);
 
+            let compensationAmount1 = await compensation.calcCompensationAmount(pToken1.address, acc0amount1);
+            expect(compensationAmount1.toString()).to.be.equal('57000000');
+
+            let compensationAmount2 = await compensation.calcCompensationAmount(pToken1.address, acc1amount1);
+            expect(compensationAmount2.toString()).to.be.equal('93000000');
+
+            let compensationAmount3 = await compensation.calcCompensationAmount(pToken1.address, acc2amount1);
+            expect(compensationAmount3.toString()).to.be.equal('150000000');
+
             // ===========
             // second pool
             // ===========
@@ -335,6 +344,64 @@ describe("Compensation", function () {
             expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claim
+            let amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            expect(amount1.toString()).to.be.equal('342000000'); // 1 pool - $57, 57 tokens with $1 price, 2 pool = $285, 19 tokens with $15 price
+
+            let amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            expect(amount2.toString()).to.be.equal('558000000'); // 1 pool - $93, 93 tokens with $1 price, 2 pool = $465, 31 tokens with $15 price
+
+            let amount3 = await compensation.calcClaimAmount(accounts[2].address);
+            expect(amount3.toString()).to.be.equal('150000000');
+
+            let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < compensation_startBlock - currentBlockNumBefore.toString(); i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            let stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);
+            let stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[0]).claimToken();
+
+            let stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
+            let stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
+
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('342000000');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('342000000');
+
+            stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);
+            stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[0]).claimToken();
+
+            stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
+            stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
+
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('0');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('0');
+
+            const stableAcc1BalanceBefore = await stable.balanceOf(accounts[1].address);
+            stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
+
+            await compensation.connect(accounts[1]).claimToken();
+
+            const stableAcc1BalanceAfter = await stable.balanceOf(accounts[1].address);
+            stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
+
+            expect(stableAcc1BalanceAfter.sub(stableAcc1BalanceBefore).toString()).to.be.equal('558000000');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('558000000');
+
+            await expect(
+                compensation.connect(accounts[0]).addBlackList(accounts[2].address)
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            await compensation.addBlackList(accounts[2].address);
+
+            await expect(
+                compensation.connect(accounts[2]).claimToken()
+            ).to.be.revertedWith(revertMessages.compensationClaimTokenUserInBlackList);
+
             // 6. remove unused tokens
         });
     });

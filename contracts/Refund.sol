@@ -122,7 +122,11 @@ contract Refund is Service, BlackList {
             claimAmount += amount * checkpoints[baseToken][i] / totalAmount[baseToken];
         }
 
-        return claimAmount - balances[user][baseToken].out;
+        if (claimAmount > amount) {
+            return amount - balances[user][baseToken].out;
+        } else {
+            return claimAmount - balances[user][baseToken].out;
+        }
     }
 
     function getCheckpointsLength(address baseToken_) public view returns (uint) {
