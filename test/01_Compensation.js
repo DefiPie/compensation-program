@@ -4,33 +4,34 @@ const { eventsName, revertMessages } = require('./shared/enums');
 
 describe("Compensation", function () {
     let compensation, Compensation;
-    let mock, Mock, ERC20Token;
+    let mainMock, MainMock, ERC20Token, MockPToken;
 
     let controller;
     let ETHUSDPriceFeed;
 
     let compensation_stableCoin;
-    let compensation_startBlock = '10';
-    let compensation_endBlock = '100';
+    let compensation_startBlock;
+    let compensation_endBlock;
 
     let owner, accounts;
 
     before(async () => {
-        Mock = await hre.ethers.getContractFactory("Mock");
+        MainMock = await hre.ethers.getContractFactory("MainMock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        MockPToken = await hre.ethers.getContractFactory("MockPToken");
         Compensation = await hre.ethers.getContractFactory("Compensation");
 
         [owner, ...accounts] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        mock = await Mock.deploy();
-        console.log("Mock deployed to:", mock.address);
+        mainMock = await MainMock.deploy();
+        console.log("MainMock deployed to:", mainMock.address);
 
-        controller = mock.address;
-        ETHUSDPriceFeed = mock.address;
+        controller = mainMock.address;
+        ETHUSDPriceFeed = mainMock.address;
 
-        let amount = '100000000000000000000';
+        let amount = '1000000000000000000000000';
         const stable = await ERC20Token.deploy(
             amount,
             'USDT',
@@ -39,6 +40,10 @@ describe("Compensation", function () {
         console.log("Stable deployed to:", stable.address);
 
         compensation_stableCoin = stable.address;
+
+        let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+        compensation_startBlock = 10 + currentBlockNumBefore;
+        compensation_endBlock = 100 + currentBlockNumBefore;
 
         compensation = await Compensation.deploy(
             compensation_stableCoin,
@@ -65,6 +70,62 @@ describe("Compensation", function () {
             expect(endBlock).to.be.equal(compensation_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+        });
+
+        it('check init data', async () => {
+            await expect(
+                Compensation.deploy(
+                    ethers.constants.AddressZero,
+                    compensation_startBlock,
+                    compensation_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
+
+            await expect(
+                Compensation.deploy(
+                    compensation_stableCoin,
+                    compensation_startBlock,
+                    compensation_endBlock,
+                    controller,
+                    ethers.constants.AddressZero,
+                )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
+
+            await expect(
+                Compensation.deploy(
+                    compensation_stableCoin,
+                    compensation_startBlock,
+                    compensation_endBlock,
+                    ethers.constants.AddressZero,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
+
+            await expect(
+                Compensation.deploy(
+                    compensation_stableCoin,
+                    '0',
+                    compensation_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
+
+            await expect(
+                Compensation.deploy(
+                    compensation_stableCoin,
+                    compensation_startBlock,
+                    '0',
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
+
+            await expect(
+                Compensation.deploy(
+                    compensation_stableCoin,
+                    '200',
+                    '100',
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.compensationConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
         });
     });
 
