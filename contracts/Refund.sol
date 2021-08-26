@@ -49,9 +49,9 @@ contract Refund is Service, BlackList {
         endBlock = endBlock_;
     }
 
-    function addRefundPair(address pToken, address baseToken, uint course) public onlyOwner returns (bool) {
-        pTokens[pToken] = Base(baseToken, course);
-        baseTokens[pToken] = baseToken;
+    function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
+        pTokens[pToken] = Base({baseToken: baseToken_, course: course_});
+        baseTokens[pToken] = baseToken_;
 
         return true;
     }
