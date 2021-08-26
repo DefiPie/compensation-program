@@ -17,7 +17,7 @@ describe("Compensation", function () {
 
     before(async () => {
         MainMock = await hre.ethers.getContractFactory("MainMock");
-        ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        ERC20Token = await hre.ethers.getContractFactory("ERC20TokenDec6");
         MockPToken = await hre.ethers.getContractFactory("MockPToken");
         Compensation = await hre.ethers.getContractFactory("Compensation");
 
@@ -31,7 +31,7 @@ describe("Compensation", function () {
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
 
-        let amount = '1000000000000000000000000';
+        let amount = '1000000000000'; // 1,000,000e6
         const stable = await ERC20Token.deploy(
             amount,
             'USDT',
@@ -89,7 +89,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ethers.constants.AddressZero,
-                )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
+                )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
                 Compensation.deploy(
@@ -98,7 +98,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     ethers.constants.AddressZero,
                     ETHUSDPriceFeed,
-                )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
+                )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
                 Compensation.deploy(
@@ -132,7 +132,61 @@ describe("Compensation", function () {
     describe('Transactions', async () => {
         it('check data', async () => {
             // 1. deploy contract
+            let blockNumBefore = await ethers.provider.getBlockNumber();
+            compensation_startBlock = +blockNumBefore + 90;
+            compensation_endBlock = +compensation_startBlock + 100;
+
+            compensation = await Compensation.deploy(
+                compensation_stableCoin,
+                compensation_startBlock,
+                compensation_endBlock,
+                controller,
+                ETHUSDPriceFeed,
+            );
+            console.log("Compensation deployed to:", compensation.address);
+
             // 2. add pToken
+            let amount = '1000000000000000000000000'; // 1000000e18
+            const pToken1 = await MockPToken.deploy(
+                amount,
+                'pToken1',
+                'pToken1'
+            );
+
+            const pToken2 = await MockPToken.deploy(
+                amount,
+                'pToken2',
+                'pToken2'
+            );
+
+            const pToken3 = await MockPToken.deploy(
+                amount,
+                'pToken3',
+                'pToken3'
+            );
+
+            let price1 =  '20000000000000000'; // 1 pToken1 = $0.02  (1 token = $1)
+            let price2 = '300000000000000000'; // 1 pToken1 = $0.3   (1 token = $15)
+            let price3 =   '6000000000000000'; // 1 pToken1 = $0.006 (1 token = $0.3)
+
+            await expect(
+                compensation.connect(accounts[0]).addPToken(pToken1.address, price3)
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            await compensation.addPToken(pToken1.address, price1);
+            await compensation.addPToken(pToken2.address, price2);
+            await compensation.addPToken(pToken3.address, price3);
+
+            const [contractPrice1, contractPrice2, contractPrice3] = await Promise.all([
+                compensation.pTokens(pToken1.address),
+                compensation.pTokens(pToken2.address),
+                compensation.pTokens(pToken3.address),
+            ]);
+
+            expect(contractPrice1.toString()).to.be.equal(price1);
+            expect(contractPrice2.toString()).to.be.equal(price2);
+            expect(contractPrice3.toString()).to.be.equal(price3);
+
             // 3. add 3 checkpoint
             // 4. 3 users call compensation
             // 5. claim
