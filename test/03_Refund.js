@@ -181,14 +181,14 @@ describe("Refund", function () {
             await refund.addRefundPair(pToken3.address, baseToken3.address, course3);
 
             const [contractCourse1, contractCourse2, contractCourse3] = await Promise.all([
-                refund.pTokens(pToken1.address, baseToken1.address),
-                refund.pTokens(pToken2.address, baseToken2.address),
-                refund.pTokens(pToken3.address, baseToken3.address),
+                refund.pTokens(pToken1.address),
+                refund.pTokens(pToken2.address),
+                refund.pTokens(pToken3.address),
             ]);
 
-            expect(contractCourse1).to.be.equal(course1);
-            expect(contractCourse2).to.be.equal(course2);
-            expect(contractCourse3).to.be.equal(course3);
+            expect(contractCourse1.course.toString()).to.be.equal(course1);
+            expect(contractCourse2.course.toString()).to.be.equal(course2);
+            expect(contractCourse3.course.toString()).to.be.equal(course3);
 
             // 3. add 3 token refund amount
             let baseTokenAmount1 = '100000000000000000000'; // 100e18

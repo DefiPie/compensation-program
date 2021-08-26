@@ -9,7 +9,13 @@ contract Refund is Service, BlackList {
     uint public startBlock;
     uint public endBlock;
 
-    mapping(address => mapping(address => uint)) public pTokens;
+    mapping(address => Base) public pTokens;
+
+    struct Base {
+        address baseToken;
+        uint course;
+    }
+
     mapping(address => address) public baseTokens;
 
     struct Balance {
@@ -44,7 +50,7 @@ contract Refund is Service, BlackList {
     }
 
     function addRefundPair(address pToken, address baseToken, uint course) public onlyOwner returns (bool) {
-        pTokens[pToken][baseToken] = course;
+        pTokens[pToken] = Base(baseToken, course);
         baseTokens[pToken] = baseToken;
 
         return true;
@@ -83,8 +89,7 @@ contract Refund is Service, BlackList {
     }
 
     function calcRefundAmount(address pToken, uint amount) public view returns (uint) {
-        address baseToken = baseTokens[pToken];
-        uint course = pTokens[pToken][baseToken];
+        uint course = pTokens[pToken].course;
 
         return amount * course / 1e18;
     }
