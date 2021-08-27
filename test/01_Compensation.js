@@ -403,6 +403,38 @@ describe("Compensation", function () {
             ).to.be.revertedWith(revertMessages.compensationClaimTokenUserInBlackList);
 
             // 6. remove unused tokens
+            await expect(
+                compensation.connect(accounts[0]).removeUnused(stable.address, '10100000000')
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < compensation_endBlock - currentBlockNumBefore.toString() + 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            const stableOwnerBalanceBefore = await stable.balanceOf(owner.address);
+            let stableCompensationContractBalanceBefore = await stable.balanceOf(compensation.address);
+
+            await compensation.removeUnused(stable.address, '10100000000');
+
+            const stableOwnerBalanceAfter = await stable.balanceOf(owner.address);
+            let stableCompensationBalanceAfter = await stable.balanceOf(compensation.address);
+
+            expect(stableOwnerBalanceAfter.sub(stableOwnerBalanceBefore).toString()).to.be.equal('10100000000');
+            expect(stableCompensationContractBalanceBefore.sub(stableCompensationBalanceAfter).toString()).to.be.equal('10100000000');
+
+            // 7. compensation after
+            await pToken1.transfer(accounts[0].address, acc0amount1);
+            await pToken1.connect(accounts[0]).approve(compensation.address, acc0amount1);
+
+            for (let i = 0; i < 100; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            await expect(
+                compensation.compensation(pToken1.address, acc0amount1)
+            ).to.be.revertedWith(revertMessages.compensationCompensationYouCanConvertPTokensBeforeStartBlockOnly);
         });
     });
 

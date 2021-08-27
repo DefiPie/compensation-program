@@ -77,7 +77,7 @@ contract Convert is Service, BlackList {
     }
 
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
-        require(endBlock > block.number, "Convert::removeUnusedToken: bad timing for the request");
+        require(endBlock < block.number, "Convert::removeUnusedToken: bad timing for the request");
 
         doTransferOut(tokenTo, msg.sender, amount);
 

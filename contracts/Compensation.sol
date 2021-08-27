@@ -70,7 +70,7 @@ contract Compensation is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endBlock > block.number, "Compensation::removeUnused: bad timing for the request");
+        require(endBlock < block.number, "Compensation::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 

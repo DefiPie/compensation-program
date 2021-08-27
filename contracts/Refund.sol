@@ -91,7 +91,7 @@ contract Refund is Service, BlackList {
     function calcRefundAmount(address pToken, uint amount) public view returns (uint) {
         uint course = pTokens[pToken].course;
 
-        return amount * course / 1e18;
+        return amount * course / 1e18; // @Todo decimals stable - decimals pToken
     }
 
     function claimToken(address pToken) public returns (bool) {
