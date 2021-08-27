@@ -93,7 +93,17 @@ contract Compensation is Service, BlackList {
     function calcCompensationAmount(address pToken, uint amount) public view returns (uint) {
         uint price = pTokens[pToken];
 
-        return amount * price / 1e18 / 1e12; // @Todo decimals stable - decimals pToken
+        uint pTokenDecimals = ERC20(pToken).decimals();
+        uint stableDecimals = ERC20(stableCoin).decimals();
+        uint factor;
+
+        if (pTokenDecimals >= stableDecimals) {
+            factor = 10**(pTokenDecimals - stableDecimals);
+            return amount * price / factor / 1e18;
+        } else {
+            factor = 10**(stableDecimals - pTokenDecimals);
+            return amount * price * factor / 1e18;
+        }
     }
 
     function claimToken() public returns (bool) {

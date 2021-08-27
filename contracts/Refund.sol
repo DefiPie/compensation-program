@@ -91,7 +91,17 @@ contract Refund is Service, BlackList {
     function calcRefundAmount(address pToken, uint amount) public view returns (uint) {
         uint course = pTokens[pToken].course;
 
-        return amount * course / 1e18; // @Todo decimals stable - decimals pToken
+        uint pTokenDecimals = ERC20(pToken).decimals();
+        uint baseTokenDecimals = ERC20(pTokens[pToken].baseToken).decimals();
+        uint factor;
+
+        if (pTokenDecimals >= baseTokenDecimals) {
+            factor = 10**(pTokenDecimals - baseTokenDecimals);
+            return amount * course / factor / 1e18;
+        } else {
+            factor = 10**(baseTokenDecimals - pTokenDecimals);
+            return amount * course * factor / 1e18;
+        }
     }
 
     function claimToken(address pToken) public returns (bool) {
