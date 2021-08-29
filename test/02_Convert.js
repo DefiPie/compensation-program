@@ -269,6 +269,42 @@ describe("Convert", function () {
             expect(thirdCheckpoint.percent.toString()).to.be.equal(percentThirdCheckpoint);
             expect(thirdCheckpoint.amount.toString()).to.be.equal(amount3);
 
+            let fromBlockFourthCheckpoint = +toBlockThirdCheckpoint + 10;
+            let toBlockFourthCheckpoint = +fromBlockFourthCheckpoint + 25;
+            let percentFourthCheckpoint = '7700000000000000000'; // 77%
+            let amount4 = '1';
+            await tokenTo.approve(convert.address, amount4);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(toBlockThirdCheckpoint, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointBlockValueMustBeMoreThanPreviousLastBlockValue);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(+convert_startBlock - 1, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointStartBlockValueMustBeLessThanFromBlockValue);
+
+            let blockNum = await ethers.provider.getBlockNumber();
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(blockNum, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointCurrentBlockValueMustBeLessThanFromBlockValue);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1', percentFourthCheckpoint, amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointFromBlockValueMustBeLessThanToBlockValue);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1000', percentFourthCheckpoint, amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointToBlockValueMustBeLessThanEndBlock);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, toBlockFourthCheckpoint, '0', amount4)
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointPercentValueMustBeMoreThan0);
+
+            await expect(
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, toBlockFourthCheckpoint, percentFourthCheckpoint, '0')
+            ).to.be.revertedWith(revertMessages.convertAddCheckpointAmountValueMustBeMoreThan0);
+
             // 3. 3 users call convert
             // 4. claimToken
             // 5. remove unused tokens
