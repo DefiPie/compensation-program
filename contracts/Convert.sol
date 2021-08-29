@@ -24,6 +24,7 @@ contract Convert is Service, BlackList {
         uint fromBlock;
         uint toBlock;
         uint percent; // for example 10e18 is 10%
+        uint amount;
     }
 
     // num => block => value
@@ -70,12 +71,6 @@ contract Convert is Service, BlackList {
         endBlock = endBlock_;
     }
 
-    function addTokenAmount(uint amount) public onlyOwner returns (bool) {
-        doTransferIn(msg.sender, tokenTo, amount);
-
-        return true;
-    }
-
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
         require(endBlock < block.number, "Convert::removeUnusedToken: bad timing for the request");
 
@@ -84,20 +79,24 @@ contract Convert is Service, BlackList {
         return true;
     }
 
-    function addCheckpoint(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
+    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_, uint amount) public onlyOwner returns (bool) {
         require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
         require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
         require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
+        require(percent_ > 0, "Convert::addCheckpoint: percent value must be more than 0");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {
             require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
         }
 
+        uint amountIn = doTransferIn(msg.sender, tokenTo, amount);
+
         Checkpoint memory cp;
         cp.fromBlock = fromBlock_;
         cp.toBlock = toBlock_;
         cp.percent = percent_;
+        cp.amount = amountIn;
 
         checkpoints.push(cp);
 
@@ -167,7 +166,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100 / 1e18;
+            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 1e18 / 100e18;
         }
 
         return claimAmount - balances[user].out;
