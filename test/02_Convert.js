@@ -4,7 +4,7 @@ const { eventsName, revertMessages } = require('./shared/enums');
 
 describe("Convert", function () {
     let convert, Convert;
-    let mock, Mock, ERC20Token;
+    let mainMock, MainMock, ERC20Token, MockPToken;
     let tokenTo, pToken;
 
     let controller;
@@ -19,19 +19,20 @@ describe("Convert", function () {
     let owner, accounts;
 
     before(async () => {
-        Mock = await hre.ethers.getContractFactory("Mock");
+        MainMock = await hre.ethers.getContractFactory("MainMock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        MockPToken = await hre.ethers.getContractFactory("MockPToken");
         Convert = await hre.ethers.getContractFactory("Convert");
 
         [owner, ...accounts] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        mock = await Mock.deploy();
-        console.log("Mock deployed to:", mock.address);
+        mainMock = await MainMock.deploy();
+        console.log("MainMock deployed to:", mainMock.address);
 
-        controller = mock.address;
-        ETHUSDPriceFeed = mock.address;
+        controller = mainMock.address;
+        ETHUSDPriceFeed = mainMock.address;
 
         let amount = '100000000000000000000';
         pToken = await ERC20Token.deploy(
@@ -52,6 +53,10 @@ describe("Convert", function () {
         console.log("TokenTo deployed to:", tokenTo.address);
 
         convert_tokenTo = tokenTo.address;
+
+        let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+        convert_startBlock = 10 + currentBlockNumBefore;
+        convert_endBlock = 100 + currentBlockNumBefore;
 
         convert = await Convert.deploy(
             convert_pTokenFrom,
