@@ -90,6 +90,96 @@ describe("Convert", function () {
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
         });
+
+        it('check init data', async () => {
+            await expect(
+                Convert.deploy(
+                    ethers.constants.AddressZero,
+                    convert_tokenTo,
+                    convert_course,
+                    convert_startBlock,
+                    convert_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorAddressIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    ethers.constants.AddressZero,
+                    convert_course,
+                    convert_startBlock,
+                    convert_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorAddressIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    convert_course,
+                    convert_startBlock,
+                    convert_endBlock,
+                    ethers.constants.AddressZero,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    convert_course,
+                    convert_startBlock,
+                    convert_endBlock,
+                    controller,
+                    ethers.constants.AddressZero,
+                )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    '0',
+                    convert_startBlock,
+                    convert_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    convert_course,
+                    '0',
+                    convert_endBlock,
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    convert_course,
+                    convert_startBlock,
+                    '0',
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
+
+            await expect(
+                Convert.deploy(
+                    convert_pTokenFrom,
+                    convert_tokenTo,
+                    convert_course,
+                    '1000',
+                    '100',
+                    controller,
+                    ETHUSDPriceFeed,
+                )).to.be.revertedWith(revertMessages.convertConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
+        });
     });
 
     describe('Transactions', async () => {
