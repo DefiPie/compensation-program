@@ -217,9 +217,9 @@ describe("Convert", function () {
 
             const ownerBalanceBefore = await tokenTo.balanceOf(owner.address);
             const convertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
-            //
+
             await convert.addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint, amount1);
-            //
+
             const ownerBalanceAfter = await tokenTo.balanceOf(owner.address);
             const convertBalanceAfter = await tokenTo.balanceOf(convert.address);
 
@@ -234,6 +234,40 @@ describe("Convert", function () {
             expect(firstCheckpoint.toBlock).to.be.equal(toBlockFirstCheckpoint);
             expect(firstCheckpoint.percent.toString()).to.be.equal(percentFirstCheckpoint);
             expect(firstCheckpoint.amount.toString()).to.be.equal(amount1);
+
+            let fromBlockSecondCheckpoint = +toBlockFirstCheckpoint + 1;
+            let toBlockSecondCheckpoint = +fromBlockSecondCheckpoint + 15;
+            let percentSecondCheckpoint = '1200000000000000000'; // 12%
+
+            await tokenTo.approve(convert.address, amount2);
+            await convert.addCheckpointAndTokensAmount(fromBlockSecondCheckpoint, toBlockSecondCheckpoint, percentSecondCheckpoint, amount2);
+
+            checkpointLength = await convert.getCheckpointsLength();
+            expect(checkpointLength).to.be.equal(2);
+
+            let secondCheckpoint = await convert.checkpoints(1);
+
+            expect(secondCheckpoint.fromBlock).to.be.equal(fromBlockSecondCheckpoint);
+            expect(secondCheckpoint.toBlock).to.be.equal(toBlockSecondCheckpoint);
+            expect(secondCheckpoint.percent.toString()).to.be.equal(percentSecondCheckpoint);
+            expect(secondCheckpoint.amount.toString()).to.be.equal(amount2);
+
+            let fromBlockThirdCheckpoint = +toBlockSecondCheckpoint + 10;
+            let toBlockThirdCheckpoint = +fromBlockThirdCheckpoint + 25;
+            let percentThirdCheckpoint = '7700000000000000000'; // 77%
+
+            await tokenTo.approve(convert.address, amount3);
+            await convert.addCheckpointAndTokensAmount(fromBlockThirdCheckpoint, toBlockThirdCheckpoint, percentThirdCheckpoint, amount3);
+
+            checkpointLength = await convert.getCheckpointsLength();
+            expect(checkpointLength).to.be.equal(3);
+
+            let thirdCheckpoint = await convert.checkpoints(2);
+
+            expect(thirdCheckpoint.fromBlock).to.be.equal(fromBlockThirdCheckpoint);
+            expect(thirdCheckpoint.toBlock).to.be.equal(toBlockThirdCheckpoint);
+            expect(thirdCheckpoint.percent.toString()).to.be.equal(percentThirdCheckpoint);
+            expect(thirdCheckpoint.amount.toString()).to.be.equal(amount3);
 
             // 3. 3 users call convert
             // 4. claimToken
