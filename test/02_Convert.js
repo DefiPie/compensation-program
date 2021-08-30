@@ -352,7 +352,40 @@ describe("Convert", function () {
 
             expect(pTokenAcc2BalanceBefore.sub(pTokenAcc2BalanceAfter).toString()).to.be.equal(acc2amount);
             expect(pTokenConvertBalanceAfter.sub(pTokenConvertContractBalanceBefore).toString()).to.be.equal(acc2amount);
-            
+
+            let acc4amount = '150000000000000000000'; // 350e18 * 51
+
+            await pToken.transfer(accounts[4].address, acc4amount);
+            await pToken.connect(accounts[4]).approve(convert.address, acc4amount);
+
+            let pTokenConvertBalanceBefore = await pToken.balanceOf(convert.address);
+            let pTokenAcc4BalanceBefore = await pToken.balanceOf(accounts[4].address);
+
+            await pToken.setBorrowBalanceStored('1000000000');
+            await mainMock.setUnderlyingPrice(pToken.address, '1000000000000000000');
+
+            await expect(
+                convert.connect(accounts[4]).convert(acc4amount)
+            ).to.be.revertedWith(revertMessages.convertConvertSumBorrowMustBeLessThan1);
+
+            pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
+            expect(pTokenConvertBalanceAfter.sub(pTokenConvertBalanceBefore).toString()).to.be.equal('0');
+
+            let pTokenAcc4BalanceAfter = await pToken.balanceOf(accounts[4].address);
+            expect(pTokenAcc4BalanceAfter.sub(pTokenAcc4BalanceBefore).toString()).to.be.equal('0');
+
+            blockNumBefore = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < convert_startBlock - blockNumBefore.toString() + 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            await pToken.setBorrowBalanceStored('0');
+
+            await expect(
+                convert.connect(accounts[4]).convert(acc4amount)
+            ).to.be.revertedWith(revertMessages.convertConvertYouCanConvertPTokensBeforeStartBlockOnly);
+
             // 4. claimToken
             // 5. remove unused tokens
         });
