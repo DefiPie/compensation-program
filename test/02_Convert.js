@@ -34,8 +34,8 @@ describe("Convert", function () {
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
 
-        let amount = '100000000000000000000';
-        pToken = await ERC20Token.deploy(
+        let amount = '100000000000000000000000'; //100,000e18
+        pToken = await MockPToken.deploy(
             amount,
             'pToken1',
             'pToken1'
@@ -306,6 +306,53 @@ describe("Convert", function () {
             ).to.be.revertedWith(revertMessages.convertAddCheckpointAmountValueMustBeMoreThan0);
 
             // 3. 3 users call convert
+            await mainMock.addPToken(pToken.address);
+
+            let acc0amount =  '6783000000000000000000'; // 133e18 * 51
+            let acc1amount = '11067000000000000000000'; // 217e18 * 51
+            let acc2amount = '17850000000000000000000'; // 350e18 * 51
+
+            await pToken.transfer(accounts[0].address, acc0amount);
+            await pToken.transfer(accounts[1].address, acc1amount);
+            await pToken.transfer(accounts[2].address, acc2amount);
+
+            await pToken.connect(accounts[0]).approve(convert.address, acc0amount);
+            await pToken.connect(accounts[1]).approve(convert.address, acc1amount);
+            await pToken.connect(accounts[2]).approve(convert.address, acc2amount);
+
+            const pTokenAcc0BalanceBefore = await pToken.balanceOf(accounts[0].address);
+            let pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
+
+            await convert.connect(accounts[0]).convert(acc0amount);
+
+            const pTokenAcc0BalanceAfter = await pToken.balanceOf(accounts[0].address);
+            let pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
+
+            expect(pTokenAcc0BalanceBefore.sub(pTokenAcc0BalanceAfter).toString()).to.be.equal(acc0amount);
+            expect(pTokenConvertBalanceAfter.sub(pTokenConvertContractBalanceBefore).toString()).to.be.equal(acc0amount);
+
+            const pTokenAcc1BalanceBefore = await pToken.balanceOf(accounts[1].address);
+            pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
+
+            await convert.connect(accounts[1]).convert(acc1amount);
+
+            const pTokenAcc1BalanceAfter = await pToken.balanceOf(accounts[1].address);
+            pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
+
+            expect(pTokenAcc1BalanceBefore.sub(pTokenAcc1BalanceAfter).toString()).to.be.equal(acc1amount);
+            expect(pTokenConvertBalanceAfter.sub(pTokenConvertContractBalanceBefore).toString()).to.be.equal(acc1amount);
+
+            const pTokenAcc2BalanceBefore = await pToken.balanceOf(accounts[2].address);
+            pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
+
+            await convert.connect(accounts[2]).convert(acc2amount);
+
+            const pTokenAcc2BalanceAfter = await pToken.balanceOf(accounts[2].address);
+            pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
+
+            expect(pTokenAcc2BalanceBefore.sub(pTokenAcc2BalanceAfter).toString()).to.be.equal(acc2amount);
+            expect(pTokenConvertBalanceAfter.sub(pTokenConvertContractBalanceBefore).toString()).to.be.equal(acc2amount);
+            
             // 4. claimToken
             // 5. remove unused tokens
         });
