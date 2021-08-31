@@ -529,9 +529,26 @@ describe("Convert", function () {
             ).to.be.revertedWith(revertMessages.convertClaimTokenUserInBlackList);
 
             // 5. remove unused tokens
+            await expect(
+                convert.connect(accounts[0]).removeUnusedToken('643000000000000000000')
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
 
+            let currentBlockNumBefore = await ethers.provider.getBlockNumber();
 
+            for (let i = 0; i < convert_endBlock - currentBlockNumBefore.toString() + 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
 
+            const tokenToOwnerBalanceBefore = await tokenTo.balanceOf(owner.address);
+            tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
+            await convert.removeUnusedToken('643000000000000000000');
+
+            const tokenToOwnerBalanceAfter = await tokenTo.balanceOf(owner.address);
+            tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(tokenToOwnerBalanceAfter.sub(tokenToOwnerBalanceBefore).toString()).to.be.equal('643000000000000000000');
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('643000000000000000000');
         });
     });
 });
