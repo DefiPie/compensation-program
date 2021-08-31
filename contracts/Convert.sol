@@ -155,21 +155,21 @@ contract Convert is Service, BlackList {
         uint allBlockAmount;
         uint blockAmount;
 
-        for (uint i = 0; i < checkpoints.length; i++) {
-            if (currentBlockNum < checkpoints[i].fromBlock) {
-                break;
-            }
+//        for (uint i = 0; i < checkpoints.length; i++) {
+//            if (currentBlockNum < checkpoints[i].fromBlock) {
+//                break;
+//            }
+//
+            allBlockAmount = checkpoints[0].toBlock - checkpoints[0].fromBlock;
 
-            allBlockAmount = checkpoints[i].toBlock - checkpoints[i].fromBlock;
-
-            if (currentBlockNum >= checkpoints[i].toBlock) {
+            if (currentBlockNum >= checkpoints[0].toBlock) {
                 blockAmount = allBlockAmount;
             } else {
-                blockAmount = currentBlockNum - checkpoints[i].fromBlock;
+                blockAmount = currentBlockNum - checkpoints[0].fromBlock;
             }
-
-            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 1e18 / 100e18;
-        }
+//
+            claimAmount = blockAmount * amount * checkpoints[0].percent / allBlockAmount / 100e18;
+//        }
 
         return claimAmount - balances[user].out;
     }

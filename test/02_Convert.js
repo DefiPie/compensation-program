@@ -207,7 +207,7 @@ describe("Convert", function () {
 
             let fromBlockFirstCheckpoint = +convert_startBlock + 1;
             let toBlockFirstCheckpoint = +fromBlockFirstCheckpoint + 10;
-            let percentFirstCheckpoint = '100000000000000000'; // 1%
+            let percentFirstCheckpoint = '1000000000000000000'; // 1%
 
             await expect(
                 convert.connect(accounts[0]).addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint, amount1)
@@ -387,7 +387,35 @@ describe("Convert", function () {
             ).to.be.revertedWith(revertMessages.convertConvertYouCanConvertPTokensBeforeStartBlockOnly);
 
             // 4. claimToken
+            let convertAmount1 = await convert.calcConvertAmount(acc0amount);
+            expect(convertAmount1.toString()).to.be.equal('135660000000000000000');
+
+            let currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            console.log('currentBlockNumBefore', currentBlockNumBefore.toString());
+
+            console.log('from block 1', fromBlockFirstCheckpoint.toString());
+            console.log('to block 1', toBlockFirstCheckpoint.toString());
+            console.log('percent 1', percentFirstCheckpoint.toString());
+            console.log('amount 1', amount1.toString());
+
+            // amount * percent * (current block - from block) / all blocks
+            // 135,66e18 * 1% * (105 - 103) / 10 = 0.27132e18
+            let claimAmount1 = await convert.calcClaimAmount(accounts[0].address);
+            expect(claimAmount1.toString()).to.be.equal('271320000000000000');
+
+            let claimAmount2 = await convert.calcClaimAmount(accounts[1].address);
+            expect(claimAmount2.toString()).to.be.equal('442680000000000000');
+
+            let claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
+            expect(claimAmount3.toString()).to.be.equal('714000000000000000');
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            console.log('currentBlockNumBefore', currentBlockNumBefore.toString());
+
             // 5. remove unused tokens
+
+
+
         });
     });
 });
