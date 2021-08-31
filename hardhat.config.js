@@ -53,6 +53,9 @@ module.exports = {
             accounts: [`0x${process.env.MUMBAI_PRIVATE_KEY}`]
         }
     },
+    etherscan: {
+        apiKey: process.env.ETHERSCAN_API_KEY,
+    },
     solidity: {
         compilers: [{
             version: "0.8.4",
