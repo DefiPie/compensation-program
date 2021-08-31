@@ -168,7 +168,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount = blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100e18;
+            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100e18;
         }
 
         return claimAmount - balances[user].out;

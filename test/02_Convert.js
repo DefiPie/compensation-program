@@ -237,7 +237,7 @@ describe("Convert", function () {
 
             let fromBlockSecondCheckpoint = +toBlockFirstCheckpoint + 1;
             let toBlockSecondCheckpoint = +fromBlockSecondCheckpoint + 15;
-            let percentSecondCheckpoint = '1200000000000000000'; // 12%
+            let percentSecondCheckpoint = '12000000000000000000'; // 12%
 
             await tokenTo.approve(convert.address, amount2);
             await convert.addCheckpointAndTokensAmount(fromBlockSecondCheckpoint, toBlockSecondCheckpoint, percentSecondCheckpoint, amount2);
@@ -254,7 +254,7 @@ describe("Convert", function () {
 
             let fromBlockThirdCheckpoint = +toBlockSecondCheckpoint + 10;
             let toBlockThirdCheckpoint = +fromBlockThirdCheckpoint + 25;
-            let percentThirdCheckpoint = '7700000000000000000'; // 77%
+            let percentThirdCheckpoint = '87000000000000000000'; // 87%
 
             await tokenTo.approve(convert.address, amount3);
             await convert.addCheckpointAndTokensAmount(fromBlockThirdCheckpoint, toBlockThirdCheckpoint, percentThirdCheckpoint, amount3);
@@ -271,7 +271,8 @@ describe("Convert", function () {
 
             let fromBlockFourthCheckpoint = +toBlockThirdCheckpoint + 10;
             let toBlockFourthCheckpoint = +fromBlockFourthCheckpoint + 25;
-            let percentFourthCheckpoint = '7700000000000000000'; // 77%
+            let percentFourthCheckpoint = '77000000000000000000'; // 77%
+
             let amount4 = '1';
             await tokenTo.approve(convert.address, amount4);
 
@@ -308,9 +309,9 @@ describe("Convert", function () {
             // 3. 3 users call convert
             await mainMock.addPToken(pToken.address);
 
-            let acc0amount =  '6783000000000000000000'; // 133e18 * 51
-            let acc1amount = '11067000000000000000000'; // 217e18 * 51
-            let acc2amount = '17850000000000000000000'; // 350e18 * 51
+            let acc0amount =  '6783000000000000000000'; // 135,66e18 * 50
+            let acc1amount = '11067000000000000000000'; // 221,34e18 * 50
+            let acc2amount = '17850000000000000000000'; // 357e18 * 50
 
             await pToken.transfer(accounts[0].address, acc0amount);
             await pToken.transfer(accounts[1].address, acc1amount);
@@ -320,12 +321,12 @@ describe("Convert", function () {
             await pToken.connect(accounts[1]).approve(convert.address, acc1amount);
             await pToken.connect(accounts[2]).approve(convert.address, acc2amount);
 
-            const pTokenAcc0BalanceBefore = await pToken.balanceOf(accounts[0].address);
+            let pTokenAcc0BalanceBefore = await pToken.balanceOf(accounts[0].address);
             let pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
 
             await convert.connect(accounts[0]).convert(acc0amount);
 
-            const pTokenAcc0BalanceAfter = await pToken.balanceOf(accounts[0].address);
+            let pTokenAcc0BalanceAfter = await pToken.balanceOf(accounts[0].address);
             let pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
 
             expect(pTokenAcc0BalanceBefore.sub(pTokenAcc0BalanceAfter).toString()).to.be.equal(acc0amount);
@@ -374,6 +375,10 @@ describe("Convert", function () {
             let pTokenAcc4BalanceAfter = await pToken.balanceOf(accounts[4].address);
             expect(pTokenAcc4BalanceAfter.sub(pTokenAcc4BalanceBefore).toString()).to.be.equal('0');
 
+            await expect(
+                convert.connect(accounts[0]).claimToken()
+            ).to.be.revertedWith(revertMessages.convertClaimTokenBadTimingForRequest);
+            
             blockNumBefore = await ethers.provider.getBlockNumber();
 
             for (let i = 0; i < convert_startBlock - blockNumBefore.toString() + 1; i++) {
@@ -400,6 +405,128 @@ describe("Convert", function () {
 
             let claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
             expect(claimAmount3.toString()).to.be.equal('714000000000000000');
+
+            let tokenToAcc0BalanceBefore = await tokenTo.balanceOf(accounts[0].address);
+            let tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
+            await convert.connect(accounts[0]).claimToken();
+
+            let tokenToAcc0BalanceAfter = await tokenTo.balanceOf(accounts[0].address);
+            let tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            // 135,66e18 * 1% * (106 - 103) / 10 = 0.40698e18
+            expect(tokenToAcc0BalanceAfter.sub(tokenToAcc0BalanceBefore).toString()).to.be.equal('406980000000000000');
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('406980000000000000');
+
+            claimAmount1 = await convert.calcClaimAmount(accounts[0].address);
+            expect(claimAmount1.toString()).to.be.equal('0');
+
+            claimAmount2 = await convert.calcClaimAmount(accounts[1].address);
+            expect(claimAmount2.toString()).to.be.equal('664020000000000000');
+
+            claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
+            expect(claimAmount3.toString()).to.be.equal('1071000000000000000');
+
+            let currentBlockNum = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < fromBlockSecondCheckpoint - currentBlockNum.toString(); i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            claimAmount1 = await convert.calcClaimAmount(accounts[0].address);
+            expect(claimAmount1.toString()).to.be.equal('949620000000000000');
+
+            claimAmount2 = await convert.calcClaimAmount(accounts[1].address);
+            expect(claimAmount2.toString()).to.be.equal('2213400000000000000');
+
+            claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
+            expect(claimAmount3.toString()).to.be.equal('3570000000000000000');
+
+            currentBlockNum = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < toBlockSecondCheckpoint - currentBlockNum.toString(); i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            // result = amount * percent * (current block - from block) / all blocks - out
+            // result = 135,66e18 * 1% * (113 - 103) / 10 - 406980000000000000 = 1,3566e18 - 0,40698e18
+            // + result = 135,66e18 * 12% * (129 - 114) / 15 = 16,2792e18
+            claimAmount1 = await convert.calcClaimAmount(accounts[0].address);
+            expect(claimAmount1.toString()).to.be.equal('17228820000000000000');
+
+            // result = 221,34e18 * 1% * (113 - 103) / 10 = 2,2134e18
+            // + result = 221,34e18 * 12% * (129 - 114) / 15 = 26,5608e18
+            claimAmount2 = await convert.calcClaimAmount(accounts[1].address);
+            expect(claimAmount2.toString()).to.be.equal('28774200000000000000');
+
+            claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
+            expect(claimAmount3.toString()).to.be.equal('46410000000000000000');
+
+            let tokenToAcc1BalanceBefore = await tokenTo.balanceOf(accounts[1].address);
+            tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
+            await convert.connect(accounts[1]).claimToken();
+
+            let tokenToAcc1BalanceAfter = await tokenTo.balanceOf(accounts[1].address);
+            tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(tokenToAcc1BalanceAfter.sub(tokenToAcc1BalanceBefore).toString()).to.be.equal('28774200000000000000');
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('28774200000000000000');
+
+            currentBlockNum = await ethers.provider.getBlockNumber();
+
+            for (let i = 0; i < toBlockThirdCheckpoint - currentBlockNum.toString() + 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            // result = amount * percent * (current block - from block) / all blocks - out
+            // result = 135,66e18 * 1% * (113 - 103) / 10 - 406980000000000000 = 1,3566e18 - 0,40698e18
+            // + result = 135,66e18 * 12% * (129 - 114) / 15 =  16,2792e18
+            // + result = 135,66e18 * 87% * (164 - 139) / 25 = 118,0242e18
+            claimAmount1 = await convert.calcClaimAmount(accounts[0].address);
+            expect(claimAmount1.toString()).to.be.equal('135253020000000000000');
+
+            // result = 221,34e18 * 1% * (113 - 103) / 10 = 2,2134e18
+            // + result = 221,34e18 * 12% * (129 - 114) / 15 = 26,5608e18 - 28,7742e18
+            // + result = 221,34e18 * 87% * (164 - 139) / 25 = 192,5658e18
+            claimAmount2 = await convert.calcClaimAmount(accounts[1].address);
+            expect(claimAmount2.toString()).to.be.equal('192565800000000000000');
+
+            claimAmount3 = await convert.calcClaimAmount(accounts[2].address);
+            expect(claimAmount3.toString()).to.be.equal('357000000000000000000');
+
+            tokenToAcc0BalanceBefore = await tokenTo.balanceOf(accounts[0].address);
+            tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
+            await convert.connect(accounts[0]).claimToken();
+
+            tokenToAcc0BalanceAfter = await tokenTo.balanceOf(accounts[0].address);
+            tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            // 135,66e18 * 1% * (106 - 103) / 10 = 0.40698e18
+            expect(tokenToAcc0BalanceAfter.sub(tokenToAcc0BalanceBefore).toString()).to.be.equal('135253020000000000000');
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('135253020000000000000');
+
+            tokenToAcc1BalanceBefore = await tokenTo.balanceOf(accounts[1].address);
+            tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
+            await convert.connect(accounts[1]).claimToken();
+
+            tokenToAcc1BalanceAfter = await tokenTo.balanceOf(accounts[1].address);
+            tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(tokenToAcc1BalanceAfter.sub(tokenToAcc1BalanceBefore).toString()).to.be.equal('192565800000000000000');
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('192565800000000000000');
+
+            await expect(
+                convert.connect(accounts[0]).addBlackList(accounts[2].address)
+            ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
+
+            await convert.addBlackList(accounts[2].address);
+
+            await expect(
+                convert.connect(accounts[2]).claimToken()
+            ).to.be.revertedWith(revertMessages.convertClaimTokenUserInBlackList);
 
             // 5. remove unused tokens
 
