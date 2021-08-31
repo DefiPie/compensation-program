@@ -207,7 +207,7 @@ describe("Convert", function () {
 
             let fromBlockFirstCheckpoint = +convert_startBlock + 1;
             let toBlockFirstCheckpoint = +fromBlockFirstCheckpoint + 10;
-            let percentFirstCheckpoint = '1000000000000000000'; // 1%
+            let percentFirstCheckpoint = '10000000000000000'; // 1%
 
             await expect(
                 convert.connect(accounts[0]).addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint, amount1)
@@ -236,7 +236,7 @@ describe("Convert", function () {
 
             let fromBlockSecondCheckpoint = +toBlockFirstCheckpoint + 1;
             let toBlockSecondCheckpoint = +fromBlockSecondCheckpoint + 15;
-            let percentSecondCheckpoint = '12000000000000000000'; // 12%
+            let percentSecondCheckpoint = '120000000000000000'; // 12%
 
             await tokenTo.approve(convert.address, amount2);
             await convert.addCheckpointAndTokensAmount(fromBlockSecondCheckpoint, toBlockSecondCheckpoint, percentSecondCheckpoint, amount2);
@@ -252,7 +252,7 @@ describe("Convert", function () {
 
             let fromBlockThirdCheckpoint = +toBlockSecondCheckpoint + 10;
             let toBlockThirdCheckpoint = +fromBlockThirdCheckpoint + 25;
-            let percentThirdCheckpoint = '87000000000000000000'; // 87%
+            let percentThirdCheckpoint = '870000000000000000'; // 87%
 
             await tokenTo.approve(convert.address, amount3);
             await convert.addCheckpointAndTokensAmount(fromBlockThirdCheckpoint, toBlockThirdCheckpoint, percentThirdCheckpoint, amount3);
@@ -268,7 +268,7 @@ describe("Convert", function () {
 
             let fromBlockFourthCheckpoint = +toBlockThirdCheckpoint + 10;
             let toBlockFourthCheckpoint = +fromBlockFourthCheckpoint + 25;
-            let percentFourthCheckpoint = '77000000000000000000'; // 77%
+            let percentFourthCheckpoint = '770000000000000000'; // 77%
 
             let amount4 = '1';
             await tokenTo.approve(convert.address, amount4);

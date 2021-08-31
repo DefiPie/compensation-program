@@ -23,7 +23,7 @@ contract Convert is Service, BlackList {
     struct Checkpoint {
         uint fromBlock;
         uint toBlock;
-        uint percent; // for example 10e18 is 10%
+        uint percent; // for example 1e18 is 100%
     }
 
     // num => block => value
@@ -165,7 +165,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100e18;
+            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 1e18;
         }
 
         return claimAmount - balances[user].out;
