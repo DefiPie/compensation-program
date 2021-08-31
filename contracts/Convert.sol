@@ -24,7 +24,6 @@ contract Convert is Service, BlackList {
         uint fromBlock;
         uint toBlock;
         uint percent; // for example 10e18 is 10%
-        uint amount;
     }
 
     // num => block => value
@@ -85,20 +84,18 @@ contract Convert is Service, BlackList {
         require(fromBlock_ < toBlock_, "Convert::addCheckpoint: to block value must be more than from block value");
         require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
         require(percent_ > 0, "Convert::addCheckpoint: percent value must be more than 0");
-        require(amount > 0, "Convert::addCheckpoint: amount value must be more than 0");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {
             require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
         }
 
-        uint amountIn = doTransferIn(msg.sender, tokenTo, amount);
+        doTransferIn(msg.sender, tokenTo, amount);
 
         Checkpoint memory cp;
         cp.fromBlock = fromBlock_;
         cp.toBlock = toBlock_;
         cp.percent = percent_;
-        cp.amount = amountIn;
 
         checkpoints.push(cp);
 
