@@ -10,10 +10,13 @@ contract Compensation is Service, BlackList {
     uint public startBlock;
     uint public endBlock;
 
+    uint public constant blocksPerYear = 2102400; // 1 block ~ 15 seconds
+    uint public rewardRatePerBlock;
+
     mapping(address => uint) public pTokens;
 
     struct Balance {
-        uint amount;
+        uint amountIn;
         uint out;
     }
 
@@ -26,7 +29,8 @@ contract Compensation is Service, BlackList {
         uint startBlock_,
         uint endBlock_,
         address controller_,
-        address ETHUSDPriceFeed_
+        address ETHUSDPriceFeed_,
+        uint rewardAPY_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             stableCoin_ != address(0)
@@ -51,6 +55,8 @@ contract Compensation is Service, BlackList {
 
         startBlock = startBlock_;
         endBlock = endBlock_;
+
+        rewardRatePerBlock = rewardAPY_ / blocksPerYear;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
@@ -84,8 +90,12 @@ contract Compensation is Service, BlackList {
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
-        balances[msg.sender].amount += stableTokenAmount;
+        balances[msg.sender].amountIn += stableTokenAmount;
         totalAmount += stableTokenAmount;
+
+//        uint duration = endTime_- startTime_;
+//        // .div(15) - 1 eth block is mine every ~15 sec,
+//        uint rewardAmount = amount.mul(rewardRatePerBlock).mul(duration).div(15).div(1e18);
 
         return true;
     }
@@ -120,7 +130,7 @@ contract Compensation is Service, BlackList {
     }
 
     function calcClaimAmount(address user) public view returns (uint) {
-        uint amount = balances[user].amount;
+        uint amount = balances[user].amountIn;
 
         if (amount == 0 || amount == balances[user].out) {
             return 0;
