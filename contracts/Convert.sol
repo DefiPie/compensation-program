@@ -97,13 +97,24 @@ contract Convert is Service, BlackList {
         return true;
     }
 
+    function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
+        require(endBlock < block.number, "Convert::removeUnusedToken: bad timing for the request");
+
+        doTransferOut(tokenTo, msg.sender, amount);
+
+        return true;
+    }
+
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
         require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
-        balances[msg.sender].amount += calcConvertAmount(amount);
+        uint calcAmount = calcConvertAmount(amount);
+        balances[msg.sender].amount += calcAmount;
+
+        doTransferIn(reservoir, tokenTo, calcAmount);
 
         return true;
     }
@@ -168,25 +179,5 @@ contract Convert is Service, BlackList {
 
     function getCheckpointsLength() public view returns (uint) {
         return checkpoints.length;
-    }
-
-    function doTransferOut(address token, address to, uint amount) internal override {
-        ERC20(token).transferFrom(reservoir, to, amount);
-
-        bool success;
-        assembly {
-            switch returndatasize()
-            case 0 {                      // This is a non-standard ERC-20
-                success := not(0)          // set success to true
-            }
-            case 32 {                     // This is a complaint ERC-20
-                returndatacopy(0, 0, 32)
-                success := mload(0)        // Set `success = returndata` of external call
-            }
-            default {                     // This is an excessively non-compliant ERC-20, revert.
-                revert(0, 0)
-            }
-        }
-        require(success, "TOKEN_TRANSFER_OUT_FAILED");
     }
 }
