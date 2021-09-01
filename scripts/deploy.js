@@ -22,6 +22,7 @@ async function main() {
     let compensation_stableCoin;
     let compensation_startBlock;
     let compensation_endBlock;
+    let rewardApy;
 
     // convert
     let convert_pTokenFrom;
@@ -50,6 +51,8 @@ async function main() {
             'USDT'
         );
         console.log("Stable deployed to:", stable.address);
+
+        rewardApy = '250000000000000000'; // 25% - 25e16
 
         compensation_stableCoin = stable.address;
         compensation_startBlock = '10';
@@ -89,7 +92,8 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_RINKEBY;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_RINKEBY;
-        
+        rewardApy = process.env.REWARD_APY_RINKEBY;
+
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_RINKEBY;
         convert_tokenTo = process.env.TOKENTO_CONVERT_RINKEBY;
         convert_course = process.env.COURSE_CONVERT_RINKEBY;
@@ -105,6 +109,7 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_MAINNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MAINNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MAINNET;
+        rewardApy = process.env.REWARD_APY_MAINNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
@@ -121,6 +126,7 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_BSCTESTNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCTESTNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCTESTNET;
+        rewardApy = process.env.REWARD_APY_BSCTESTNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCTESTNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCTESTNET;
@@ -137,6 +143,7 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCMAINNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCMAINNET;
+        rewardApy = process.env.REWARD_APY_BSCMAINNET;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCMAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCMAINNET;
@@ -153,6 +160,7 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_MUMBAI;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MUMBAI;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MUMBAI;
+        rewardApy = process.env.REWARD_APY_MUMBAI;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MUMBAI;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MUMBAI;
@@ -169,6 +177,7 @@ async function main() {
         compensation_stableCoin = process.env.STABLECOIN_POLYGON;
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_POLYGON;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_POLYGON;
+        rewardApy = process.env.REWARD_APY_POLYGON;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_POLYGON;
         convert_tokenTo = process.env.TOKENTO_CONVERT_POLYGON;
@@ -188,6 +197,7 @@ async function main() {
         compensation_endBlock,
         controller,
         ETHUSDPriceFeed,
+        rewardApy
     );
     console.log("Compensation deployed to:", compensation.address);
 
