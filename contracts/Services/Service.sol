@@ -74,7 +74,7 @@ contract Service {
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
 
-    function doTransferOut(address token, address to, uint amount) internal {
+    function doTransferOut(address token, address to, uint amount) internal virtual {
         ERC20(token).transfer(to, amount);
 
         bool success;

@@ -8,6 +8,7 @@ import "./Services/Service.sol";
 contract Convert is Service, BlackList {
     address public pTokenFrom;
     address public tokenTo;
+    address public reservoir;
 
     uint public course;
     uint public startBlock;
@@ -36,13 +37,15 @@ contract Convert is Service, BlackList {
         uint startBlock_,
         uint endBlock_,
         address controller_,
-        address ETHUSDPriceFeed_
+        address ETHUSDPriceFeed_,
+        address reservoir_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0)
             && controller_ != address(0)
-            && ETHUSDPriceFeed_ != address(0),
+            && ETHUSDPriceFeed_ != address(0)
+            && reservoir_ != address(0),
             "Convert::Constructor: address is 0"
         );
 
@@ -65,20 +68,14 @@ contract Convert is Service, BlackList {
         controller = controller_;
         ETHUSDPriceFeed = ETHUSDPriceFeed_;
 
+        reservoir = reservoir_;
+
         course = course_;
         startBlock = startBlock_;
         endBlock = endBlock_;
     }
 
-    function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
-        require(endBlock < block.number, "Convert::removeUnusedToken: bad timing for the request");
-
-        doTransferOut(tokenTo, msg.sender, amount);
-
-        return true;
-    }
-
-    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_, uint amount) public onlyOwner returns (bool) {
+    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
         require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
         require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
         require(fromBlock_ < toBlock_, "Convert::addCheckpoint: to block value must be more than from block value");
@@ -89,8 +86,6 @@ contract Convert is Service, BlackList {
         if (length > 0) {
             require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
         }
-
-        doTransferIn(msg.sender, tokenTo, amount);
 
         Checkpoint memory cp;
         cp.fromBlock = fromBlock_;
@@ -173,5 +168,25 @@ contract Convert is Service, BlackList {
 
     function getCheckpointsLength() public view returns (uint) {
         return checkpoints.length;
+    }
+
+    function doTransferOut(address token, address to, uint amount) internal override {
+        ERC20(token).transferFrom(reservoir, to, amount);
+
+        bool success;
+        assembly {
+            switch returndatasize()
+            case 0 {                      // This is a non-standard ERC-20
+                success := not(0)          // set success to true
+            }
+            case 32 {                     // This is a complaint ERC-20
+                returndatacopy(0, 0, 32)
+                success := mload(0)        // Set `success = returndata` of external call
+            }
+            default {                     // This is an excessively non-compliant ERC-20, revert.
+                revert(0, 0)
+            }
+        }
+        require(success, "TOKEN_TRANSFER_OUT_FAILED");
     }
 }
