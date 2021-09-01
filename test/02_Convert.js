@@ -9,6 +9,7 @@ describe("Convert", function () {
 
     let controller;
     let ETHUSDPriceFeed;
+    let reservoir;
 
     let convert_pTokenFrom;
     let convert_tokenTo;
@@ -33,6 +34,7 @@ describe("Convert", function () {
 
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
+        reservoir = owner.address;
 
         let amount = '100000000000000000000000'; //100,000e18
         pToken = await MockPToken.deploy(
@@ -44,7 +46,7 @@ describe("Convert", function () {
 
         convert_pTokenFrom = pToken.address;
 
-        amount = '100000000000000000000000'; //100,000e18
+        amount = '1000000000000000000000000'; //1,000,000e18
         tokenTo = await ERC20Token.deploy(
             amount,
             'tokenTo',
@@ -66,20 +68,22 @@ describe("Convert", function () {
             convert_endBlock,
             controller,
             ETHUSDPriceFeed,
+            reservoir
         );
         console.log("Convert deployed to:", convert.address);
     });
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [pTokenFrom, tokenTo, course, startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
+            const [pTokenFrom, tokenTo, course, startBlock, endBlock, contractController, contractETHUSDPriceFeed, reservoirFromContract] = await Promise.all([
                 convert.pTokenFrom(),
                 convert.tokenTo(),
                 convert.course(),
                 convert.startBlock(),
                 convert.endBlock(),
                 convert.controller(),
-                convert.ETHUSDPriceFeed()
+                convert.ETHUSDPriceFeed(),
+                convert.reservoir()
             ]);
 
             expect(pTokenFrom).to.be.equal(convert_pTokenFrom);
@@ -89,6 +93,7 @@ describe("Convert", function () {
             expect(endBlock).to.be.equal(convert_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+            expect(reservoirFromContract).to.be.equal(reservoir);
         });
 
         it('check init data', async () => {
@@ -101,6 +106,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorAddressIs0);
 
             await expect(
@@ -112,6 +118,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorAddressIs0);
 
             await expect(
@@ -123,6 +130,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     ethers.constants.AddressZero,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -134,6 +142,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     controller,
                     ethers.constants.AddressZero,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -145,6 +154,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
 
             await expect(
@@ -156,6 +166,7 @@ describe("Convert", function () {
                     convert_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
 
             await expect(
@@ -167,6 +178,7 @@ describe("Convert", function () {
                     '0',
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorNumIs0);
 
             await expect(
@@ -178,6 +190,7 @@ describe("Convert", function () {
                     '100',
                     controller,
                     ETHUSDPriceFeed,
+                    reservoir
                 )).to.be.revertedWith(revertMessages.convertConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
         });
     });
@@ -197,34 +210,20 @@ describe("Convert", function () {
                 convert_endBlock,
                 controller,
                 ETHUSDPriceFeed,
+                reservoir
             );
             console.log("Convert deployed to:", convert.address);
 
             // 2. add 3 checkpoint
-            let amount1 = '150000000000000000000'; // 150e18
-            let amount2 = '350000000000000000000'; // 350e18
-            let amount3 = '500000000000000000000'; // 500e18
-
             let fromBlockFirstCheckpoint = +convert_startBlock + 1;
             let toBlockFirstCheckpoint = +fromBlockFirstCheckpoint + 10;
             let percentFirstCheckpoint = '10000000000000000'; // 1%
 
             await expect(
-                convert.connect(accounts[0]).addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint, amount1)
+                convert.connect(accounts[0]).addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint)
             ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
 
-            await tokenTo.approve(convert.address, amount1);
-
-            const ownerBalanceBefore = await tokenTo.balanceOf(owner.address);
-            const convertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
-
-            await convert.addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint, amount1);
-
-            const ownerBalanceAfter = await tokenTo.balanceOf(owner.address);
-            const convertBalanceAfter = await tokenTo.balanceOf(convert.address);
-
-            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(amount1);
-            expect(convertBalanceAfter.sub(convertContractBalanceBefore).toString()).to.be.equal(amount1);
+            await convert.addCheckpointAndTokensAmount(fromBlockFirstCheckpoint, toBlockFirstCheckpoint, percentFirstCheckpoint);
 
             let checkpointLength = await convert.getCheckpointsLength();
             expect(checkpointLength).to.be.equal(1);
@@ -238,8 +237,7 @@ describe("Convert", function () {
             let toBlockSecondCheckpoint = +fromBlockSecondCheckpoint + 15;
             let percentSecondCheckpoint = '120000000000000000'; // 12%
 
-            await tokenTo.approve(convert.address, amount2);
-            await convert.addCheckpointAndTokensAmount(fromBlockSecondCheckpoint, toBlockSecondCheckpoint, percentSecondCheckpoint, amount2);
+            await convert.addCheckpointAndTokensAmount(fromBlockSecondCheckpoint, toBlockSecondCheckpoint, percentSecondCheckpoint);
 
             checkpointLength = await convert.getCheckpointsLength();
             expect(checkpointLength).to.be.equal(2);
@@ -254,8 +252,7 @@ describe("Convert", function () {
             let toBlockThirdCheckpoint = +fromBlockThirdCheckpoint + 25;
             let percentThirdCheckpoint = '870000000000000000'; // 87%
 
-            await tokenTo.approve(convert.address, amount3);
-            await convert.addCheckpointAndTokensAmount(fromBlockThirdCheckpoint, toBlockThirdCheckpoint, percentThirdCheckpoint, amount3);
+            await convert.addCheckpointAndTokensAmount(fromBlockThirdCheckpoint, toBlockThirdCheckpoint, percentThirdCheckpoint);
 
             checkpointLength = await convert.getCheckpointsLength();
             expect(checkpointLength).to.be.equal(3);
@@ -270,33 +267,30 @@ describe("Convert", function () {
             let toBlockFourthCheckpoint = +fromBlockFourthCheckpoint + 25;
             let percentFourthCheckpoint = '770000000000000000'; // 77%
 
-            let amount4 = '1';
-            await tokenTo.approve(convert.address, amount4);
-
             await expect(
-                convert.addCheckpointAndTokensAmount(toBlockThirdCheckpoint, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+                convert.addCheckpointAndTokensAmount(toBlockThirdCheckpoint, toBlockFourthCheckpoint, percentFourthCheckpoint)
             ).to.be.revertedWith(revertMessages.convertAddCheckpointBlockValueMustBeMoreThanPreviousLastBlockValue);
 
             await expect(
-                convert.addCheckpointAndTokensAmount(+convert_startBlock - 1, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+                convert.addCheckpointAndTokensAmount(+convert_startBlock - 1, toBlockFourthCheckpoint, percentFourthCheckpoint)
             ).to.be.revertedWith(revertMessages.convertAddCheckpointStartBlockValueMustBeLessThanFromBlockValue);
 
             let blockNum = await ethers.provider.getBlockNumber();
 
             await expect(
-                convert.addCheckpointAndTokensAmount(blockNum, toBlockFourthCheckpoint, percentFourthCheckpoint, amount4)
+                convert.addCheckpointAndTokensAmount(blockNum, toBlockFourthCheckpoint, percentFourthCheckpoint)
             ).to.be.revertedWith(revertMessages.convertAddCheckpointCurrentBlockValueMustBeLessThanFromBlockValue);
 
             await expect(
-                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1', percentFourthCheckpoint, amount4)
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1', percentFourthCheckpoint)
             ).to.be.revertedWith(revertMessages.convertAddCheckpointFromBlockValueMustBeLessThanToBlockValue);
 
             await expect(
-                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1000', percentFourthCheckpoint, amount4)
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, '1000', percentFourthCheckpoint)
             ).to.be.revertedWith(revertMessages.convertAddCheckpointToBlockValueMustBeLessThanEndBlock);
 
             await expect(
-                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, toBlockFourthCheckpoint, '0', amount4)
+                convert.addCheckpointAndTokensAmount(fromBlockFourthCheckpoint, toBlockFourthCheckpoint, '0')
             ).to.be.revertedWith(revertMessages.convertAddCheckpointPercentValueMustBeMoreThan0);
 
             // 3. 3 users call convert
@@ -305,6 +299,9 @@ describe("Convert", function () {
             let acc0amount =  '6783000000000000000000'; // 135,66e18 * 50
             let acc1amount = '11067000000000000000000'; // 221,34e18 * 50
             let acc2amount = '17850000000000000000000'; // 357e18 * 50
+            let acc0TokenToAmount = '135660000000000000000';
+            let acc1TokenToAmount = '221340000000000000000';
+            let acc2TokenToAmount = '357000000000000000000';
 
             await pToken.transfer(accounts[0].address, acc0amount);
             await pToken.transfer(accounts[1].address, acc1amount);
@@ -317,7 +314,19 @@ describe("Convert", function () {
             let pTokenAcc0BalanceBefore = await pToken.balanceOf(accounts[0].address);
             let pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
 
+            let reservoirAmount = '1000000000000000000000'; // 1000e18
+            await tokenTo.approve(convert.address, reservoirAmount);
+
+            let ownerBalanceBefore = await tokenTo.balanceOf(owner.address);
+            let convertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
             await convert.connect(accounts[0]).convert(acc0amount);
+
+            let ownerBalanceAfter = await tokenTo.balanceOf(owner.address);
+            let convertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(acc0TokenToAmount);
+            expect(convertBalanceAfter.sub(convertContractBalanceBefore).toString()).to.be.equal(acc0TokenToAmount);
 
             let pTokenAcc0BalanceAfter = await pToken.balanceOf(accounts[0].address);
             let pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
@@ -328,7 +337,16 @@ describe("Convert", function () {
             const pTokenAcc1BalanceBefore = await pToken.balanceOf(accounts[1].address);
             pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
 
+            ownerBalanceBefore = await tokenTo.balanceOf(owner.address);
+            convertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
             await convert.connect(accounts[1]).convert(acc1amount);
+
+            ownerBalanceAfter = await tokenTo.balanceOf(owner.address);
+            convertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(acc1TokenToAmount);
+            expect(convertBalanceAfter.sub(convertContractBalanceBefore).toString()).to.be.equal(acc1TokenToAmount);
 
             const pTokenAcc1BalanceAfter = await pToken.balanceOf(accounts[1].address);
             pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
@@ -339,7 +357,16 @@ describe("Convert", function () {
             const pTokenAcc2BalanceBefore = await pToken.balanceOf(accounts[2].address);
             pTokenConvertContractBalanceBefore = await pToken.balanceOf(convert.address);
 
+            ownerBalanceBefore = await tokenTo.balanceOf(owner.address);
+            convertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
+
             await convert.connect(accounts[2]).convert(acc2amount);
+
+            ownerBalanceAfter = await tokenTo.balanceOf(owner.address);
+            convertBalanceAfter = await tokenTo.balanceOf(convert.address);
+
+            expect(ownerBalanceBefore.sub(ownerBalanceAfter).toString()).to.be.equal(acc2TokenToAmount);
+            expect(convertBalanceAfter.sub(convertContractBalanceBefore).toString()).to.be.equal(acc2TokenToAmount);
 
             const pTokenAcc2BalanceAfter = await pToken.balanceOf(accounts[2].address);
             pTokenConvertBalanceAfter = await pToken.balanceOf(convert.address);
@@ -523,7 +550,7 @@ describe("Convert", function () {
 
             // 5. remove unused tokens
             await expect(
-                convert.connect(accounts[0]).removeUnusedToken('643000000000000000000')
+                convert.connect(accounts[0]).removeUnusedToken(acc2TokenToAmount)
             ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
 
             let currentBlockNumBefore = await ethers.provider.getBlockNumber();
@@ -535,13 +562,13 @@ describe("Convert", function () {
             const tokenToOwnerBalanceBefore = await tokenTo.balanceOf(owner.address);
             tokenToConvertContractBalanceBefore = await tokenTo.balanceOf(convert.address);
 
-            await convert.removeUnusedToken('643000000000000000000');
+            await convert.removeUnusedToken(acc2TokenToAmount);
 
             const tokenToOwnerBalanceAfter = await tokenTo.balanceOf(owner.address);
             tokenToConvertBalanceAfter = await tokenTo.balanceOf(convert.address);
 
-            expect(tokenToOwnerBalanceAfter.sub(tokenToOwnerBalanceBefore).toString()).to.be.equal('643000000000000000000');
-            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal('643000000000000000000');
+            expect(tokenToOwnerBalanceAfter.sub(tokenToOwnerBalanceBefore).toString()).to.be.equal(acc2TokenToAmount);
+            expect(tokenToConvertContractBalanceBefore.sub(tokenToConvertBalanceAfter).toString()).to.be.equal(acc2TokenToAmount);
         });
     });
 });
