@@ -93,10 +93,6 @@ contract Compensation is Service, BlackList {
         balances[msg.sender].amountIn += stableTokenAmount;
         totalAmount += stableTokenAmount;
 
-//        uint duration = endTime_- startTime_;
-//        // .div(15) - 1 eth block is mine every ~15 sec,
-//        uint rewardAmount = amount.mul(rewardRatePerBlock).mul(duration).div(15).div(1e18);
-
         return true;
     }
 
@@ -131,19 +127,29 @@ contract Compensation is Service, BlackList {
 
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amountIn;
+        uint duration;
 
-        if (amount == 0 || amount == balances[user].out) {
+        if (block.number > endBlock) {
+            duration = endBlock - startBlock;
+        } else {
+            duration = block.number - startBlock;
+        }
+
+        uint additionalAmount = amount* rewardRatePerBlock * duration / 1e18;
+        uint allAmount = amount + additionalAmount;
+
+        if (allAmount == 0 || allAmount == balances[user].out) {
             return 0;
         }
 
         uint claimAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            claimAmount += amount * checkpoints[i] / totalAmount;
+            claimAmount += allAmount * checkpoints[i] / totalAmount;
         }
 
-        if (claimAmount > amount) {
-            return amount - balances[user].out;
+        if (claimAmount > allAmount) {
+            return allAmount - balances[user].out;
         } else {
             return claimAmount - balances[user].out;
         }
