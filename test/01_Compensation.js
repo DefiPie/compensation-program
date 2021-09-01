@@ -11,6 +11,8 @@ describe("Compensation", function () {
     let controller;
     let ETHUSDPriceFeed;
 
+    let reward_apy;
+
     let compensation_stableCoin;
     let compensation_startBlock;
     let compensation_endBlock;
@@ -33,6 +35,8 @@ describe("Compensation", function () {
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
 
+        reward_apy = '250000000000000000'; // 25% - 25e16
+
         let amount = '1000000000000'; // 1,000,000e6
         stable = await ERC20Token.deploy(
             amount,
@@ -53,18 +57,20 @@ describe("Compensation", function () {
             compensation_endBlock,
             controller,
             ETHUSDPriceFeed,
+            reward_apy
         );
         console.log("Compensation deployed to:", compensation.address);
     });
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
+            const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed, rewardRatePerBlock] = await Promise.all([
                 compensation.stableCoin(),
                 compensation.startBlock(),
                 compensation.endBlock(),
                 compensation.controller(),
-                compensation.ETHUSDPriceFeed()
+                compensation.ETHUSDPriceFeed(),
+                compensation.rewardRatePerBlock()
             ]);
 
             expect(stableCoin).to.be.equal(compensation_stableCoin);
@@ -72,6 +78,7 @@ describe("Compensation", function () {
             expect(endBlock).to.be.equal(compensation_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+            expect(rewardRatePerBlock).to.be.equal('118911719939');
         });
 
         it('check init data', async () => {
@@ -82,6 +89,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
 
             await expect(
@@ -91,6 +99,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ethers.constants.AddressZero,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -100,6 +109,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     ethers.constants.AddressZero,
                     ETHUSDPriceFeed,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -109,6 +119,7 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
 
             await expect(
@@ -118,6 +129,7 @@ describe("Compensation", function () {
                     '0',
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
 
             await expect(
@@ -127,6 +139,7 @@ describe("Compensation", function () {
                     '100',
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy
                 )).to.be.revertedWith(revertMessages.compensationConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
         });
     });
@@ -144,6 +157,7 @@ describe("Compensation", function () {
                 compensation_endBlock,
                 controller,
                 ETHUSDPriceFeed,
+                reward_apy
             );
             console.log("Compensation deployed to:", compensation.address);
 
