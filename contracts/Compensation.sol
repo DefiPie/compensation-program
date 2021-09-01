@@ -12,6 +12,7 @@ contract Compensation is Service, BlackList {
 
     uint public constant blocksPerYear = 2102400; // 1 block ~ 15 seconds
     uint public rewardRatePerBlock;
+    uint public lastApyBlock;
 
     mapping(address => uint) public pTokens;
 
@@ -30,7 +31,8 @@ contract Compensation is Service, BlackList {
         uint endBlock_,
         address controller_,
         address ETHUSDPriceFeed_,
-        uint rewardAPY_
+        uint rewardAPY_,
+        uint lastApyBlock_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             stableCoin_ != address(0)
@@ -41,13 +43,15 @@ contract Compensation is Service, BlackList {
 
         require(
             startBlock_ != 0
-            && endBlock_ != 0,
+            && endBlock_ != 0
+            && lastApyBlock_ !=0,
             "Compensation::Constructor: block num is 0"
         );
 
         require(
             startBlock_ > block.number
-            && startBlock_ < endBlock_,
+            && startBlock_ < endBlock_
+            && lastApyBlock_ > startBlock,
             "Compensation::Constructor: start block must be more than current block and less than end block"
         );
 
@@ -57,6 +61,7 @@ contract Compensation is Service, BlackList {
         endBlock = endBlock_;
 
         rewardRatePerBlock = rewardAPY_ / blocksPerYear;
+        lastApyBlock = lastApyBlock_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
@@ -129,8 +134,8 @@ contract Compensation is Service, BlackList {
         uint amount = balances[user].amountIn;
         uint duration;
 
-        if (block.number > endBlock) {
-            duration = endBlock - startBlock;
+        if (block.number > lastApyBlock) {
+            duration = lastApyBlock - startBlock;
         } else {
             duration = block.number - startBlock;
         }
