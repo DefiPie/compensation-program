@@ -37,7 +37,7 @@ describe("Compensation", function () {
         ETHUSDPriceFeed = mainMock.address;
 
         reward_apy = '250000000000000000'; // 25% - 25e16
-        lastApyBlock = '2102400';
+        lastApyBlock = '400';
         let amount = '1000000000000'; // 1,000,000e6
         stable = await ERC20Token.deploy(
             amount,
@@ -475,11 +475,65 @@ describe("Compensation", function () {
             amount3 = await compensation.calcClaimAmount(accounts[2].address);
 
             // 205 block with apy, 205 * 342000000 * 0.25 / 2102400 = 8336,9 - 81 = 8255,9
-            expect(amount1.toString()).to.be.equal('8255');
+            expect(amount1).to.be.equal('8255');
             // 205 block with apy, 205 * 558000000 * 0.25 / 2102400 = 13602,3 − 199 = 13403,3
             expect(amount2).to.be.equal('13403');
             // 205 block with apy, 205 * 150000000 * 0.25 / 2102400 = 3656,5 + claim amount = 150003656
             expect(amount3).to.be.equal('150003656');
+
+            for (let i = 0; i < lastApyBlock - currentBlockNumBefore - 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('399');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 300 block with apy, (399 - 99) * 342000000 * 0.25 / 2102400 = 12200 - 81 = 12119
+            expect(amount1).to.be.equal('12119');
+            // 300 block with apy, (399 - 99) * 558000000 * 0.25 / 2102400 = 19905 − 199 = 19706
+            expect(amount2).to.be.equal('19706');
+            // 300 block with apy, (399 - 99) * 150000000 * 0.25 / 2102400 = 5351 + claim amount = 150005351
+            expect(amount3).to.be.equal('150005351');
+
+            for (let i = 0; i < 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('400');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 400 block with apy, (400 - 99) * 342000000 * 0.25 / 2102400 = 12241 - 81 = 12160
+            expect(amount1).to.be.equal('12160');
+            // 400 block with apy, (400 - 99) * 558000000 * 0.25 / 2102400 = 19972 - 199 = 19773
+            expect(amount2).to.be.equal('19773');
+            // 400 block with apy, (400 - 99) * 150000000 * 0.25 / 2102400 = 5368 + claim amount = 150005368
+            expect(amount3).to.be.equal('150005368');
+
+            for (let i = 0; i < 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('401');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 401 block with apy (last apy block is 400), (400 - 99) * 342000000 * 0.25 / 2102400 = 12241 - 81 = 12160
+            expect(amount1).to.be.equal('12160');
+            // 401 block with apy (last apy block is 400), (400 - 99) * 558000000 * 0.25 / 2102400 = 19972 - 199 = 19773
+            expect(amount2).to.be.equal('19773');
+            // 401 block with apy (last apy block is 400), (400 - 99) * 150000000 * 0.25 / 2102400 = 5368 + claim amount = 150005368
+            expect(amount3).to.be.equal('150005368');
         });
     });
 
