@@ -1,10 +1,6 @@
 // npx hardhat run --network rinkeby scripts/deploy.js
 // npx hardhat verify --network rinkeby 0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0 "0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0"
 
-// Compensation deployed to: 0x8aae41f634f484A409B8F5Fc526C64F47F32054d
-// Convert deployed to: 0x03466dD35257ccd0fdc9557656B84887Da035a6d
-// Refund deployed to: 0x7A6802394A77E7dB40bD1A2464EE2e960217666f
-
 const hre = require("hardhat");
 const network = hre.network.name;
 const dotenv = require('dotenv');
