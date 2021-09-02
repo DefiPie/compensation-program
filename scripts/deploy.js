@@ -1,6 +1,10 @@
 // npx hardhat run --network rinkeby scripts/deploy.js
 // npx hardhat verify --network rinkeby 0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0 "0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0"
 
+// Compensation deployed to: 0x8aae41f634f484A409B8F5Fc526C64F47F32054d
+// Convert deployed to: 0x03466dD35257ccd0fdc9557656B84887Da035a6d
+// Refund deployed to: 0x7A6802394A77E7dB40bD1A2464EE2e960217666f
+
 const hre = require("hardhat");
 const network = hre.network.name;
 const dotenv = require('dotenv');
@@ -14,6 +18,7 @@ async function main() {
     const Compensation = await hre.ethers.getContractFactory("Compensation");
     const Convert = await hre.ethers.getContractFactory("Convert");
     const Refund = await hre.ethers.getContractFactory("Refund");
+    const [deployer] = await ethers.getSigners();
 
     let controller;
     let ETHUSDPriceFeed;
@@ -23,6 +28,7 @@ async function main() {
     let compensation_startBlock;
     let compensation_endBlock;
     let rewardApy;
+    let lastApyBlock;
 
     // convert
     let convert_pTokenFrom;
@@ -30,18 +36,19 @@ async function main() {
     let convert_course;
     let convert_startBlock;
     let convert_endBlock;
+    let reservoir;
 
     // refund
     let refund_startBlock;
     let refund_endBlock;
 
     if (network === 'hardhat') {
-        const Mock = await hre.ethers.getContractFactory("Mock");
-        const mock = await Mock.deploy();
-        console.log("Mock deployed to:", mock.address);
+        const MainMock = await hre.ethers.getContractFactory("MainMock");
+        const mainMock = await MainMock.deploy();
+        console.log("MainMock deployed to:", mainMock.address);
 
-        controller = mock.address;
-        ETHUSDPriceFeed = mock.address;
+        controller = mainMock.address;
+        ETHUSDPriceFeed = mainMock.address;
 
         const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         let amount = '100000000000000000000';
@@ -53,6 +60,7 @@ async function main() {
         console.log("Stable deployed to:", stable.address);
 
         rewardApy = '250000000000000000'; // 25% - 25e16
+        lastApyBlock = '400';
 
         compensation_stableCoin = stable.address;
         compensation_startBlock = '10';
@@ -81,6 +89,7 @@ async function main() {
 
         convert_startBlock = '10';
         convert_endBlock = '100';
+        reservoir = deployer.address;
 
         refund_startBlock = '10';
         refund_endBlock = '100';
@@ -93,12 +102,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_RINKEBY;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_RINKEBY;
         rewardApy = process.env.REWARD_APY_RINKEBY;
+        lastApyBlock = process.env.RINKEBY_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_RINKEBY;
         convert_tokenTo = process.env.TOKENTO_CONVERT_RINKEBY;
         convert_course = process.env.COURSE_CONVERT_RINKEBY;
         convert_startBlock = process.env.START_BLOCK_CONVERT_RINKEBY;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_RINKEBY;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_RINKEBY;
+        reservoir = process.env.RINKEBY_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_RINKEBY;
         refund_endBlock = process.env.END_BLOCK_REFUND_RINKEBY;
@@ -110,12 +121,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MAINNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MAINNET;
         rewardApy = process.env.REWARD_APY_MAINNET;
+        lastApyBlock = process.env.MAINNET_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
         convert_course = process.env.COURSE_CONVERT_MAINNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_MAINNET;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_MAINNET;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_MAINNET;
+        reservoir = process.env.MAINNET_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_MAINNET;
         refund_endBlock = process.env.END_BLOCK_REFUND_MAINNET;
@@ -127,12 +140,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCTESTNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCTESTNET;
         rewardApy = process.env.REWARD_APY_BSCTESTNET;
+        lastApyBlock = process.env.BSCTESTNET_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCTESTNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCTESTNET;
         convert_course = process.env.COURSE_CONVERT_BSCTESTNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_BSCTESTNET;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_BSCTESTNET;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_BSCTESTNET;
+        reservoir = process.env.BSCTESTNET_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_BSCTESTNET;
         refund_endBlock = process.env.END_BLOCK_REFUND_BSCTESTNET;
@@ -144,12 +159,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCMAINNET;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCMAINNET;
         rewardApy = process.env.REWARD_APY_BSCMAINNET;
+        lastApyBlock = process.env.BSCMAINNET_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCMAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCMAINNET;
         convert_course = process.env.COURSE_CONVERT_BSCMAINNET;
         convert_startBlock = process.env.START_BLOCK_CONVERT_BSCMAINNET;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_BSCMAINNET;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_BSCMAINNET;
+        reservoir = process.env.BSCMAINNET_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_BSCMAINNET;
         refund_endBlock = process.env.END_BLOCK_REFUND_BSCMAINNET;
@@ -161,12 +178,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MUMBAI;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MUMBAI;
         rewardApy = process.env.REWARD_APY_MUMBAI;
+        lastApyBlock = process.env.MUMBAI_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MUMBAI;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MUMBAI;
         convert_course = process.env.COURSE_CONVERT_MUMBAI;
         convert_startBlock = process.env.START_BLOCK_CONVERT_MUMBAI;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_MUMBAI;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_MUMBAI;
+        reservoir = process.env.MUMBAI_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_MUMBAI;
         refund_endBlock = process.env.END_BLOCK_REFUND_MUMBAI;
@@ -178,12 +197,14 @@ async function main() {
         compensation_startBlock = process.env.START_BLOCK_COMPENSATION_POLYGON;
         compensation_endBlock = process.env.END_BLOCK_COMPENSATION_POLYGON;
         rewardApy = process.env.REWARD_APY_POLYGON;
+        lastApyBlock = process.env.POLYGON_LAST_APY_BLOCK;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_POLYGON;
         convert_tokenTo = process.env.TOKENTO_CONVERT_POLYGON;
         convert_course = process.env.COURSE_CONVERT_POLYGON;
         convert_startBlock = process.env.START_BLOCK_CONVERT_POLYGON;
-        convert_endBlock = process.env.END_BLOCK__CONVERT_POLYGON;
+        convert_endBlock = process.env.END_BLOCK_CONVERT_POLYGON;
+        reservoir = process.env.POLYGON_RESERVOIR;
 
         refund_startBlock = process.env.START_BLOCK_REFUND_POLYGON;
         refund_endBlock = process.env.END_BLOCK_REFUND_POLYGON;
@@ -197,7 +218,8 @@ async function main() {
         compensation_endBlock,
         controller,
         ETHUSDPriceFeed,
-        rewardApy
+        rewardApy,
+        lastApyBlock
     );
     console.log("Compensation deployed to:", compensation.address);
 
@@ -208,7 +230,8 @@ async function main() {
         convert_startBlock,
         convert_endBlock,
         controller,
-        ETHUSDPriceFeed
+        ETHUSDPriceFeed,
+        reservoir
     );
     console.log("Convert deployed to:", convert.address);
 
