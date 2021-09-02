@@ -392,8 +392,9 @@ describe("Compensation", function () {
             let stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
             let stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('342000000');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('342000000');
+            let additionalAmount = '40';
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('342000040');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('342000040');
 
             stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);
             stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
@@ -403,8 +404,9 @@ describe("Compensation", function () {
             stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
             stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('0');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('0');
+            additionalAmount = '41';
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('41');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('41');
 
             const stableAcc1BalanceBefore = await stable.balanceOf(accounts[1].address);
             stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
@@ -414,8 +416,9 @@ describe("Compensation", function () {
             const stableAcc1BalanceAfter = await stable.balanceOf(accounts[1].address);
             stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc1BalanceAfter.sub(stableAcc1BalanceBefore).toString()).to.be.equal('558000000');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('558000000');
+            additionalAmount = '199';
+            expect(stableAcc1BalanceAfter.sub(stableAcc1BalanceBefore).toString()).to.be.equal('558000199');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('558000199');
 
             await expect(
                 compensation.connect(accounts[0]).addBlackList(accounts[2].address)
@@ -441,13 +444,14 @@ describe("Compensation", function () {
             const stableOwnerBalanceBefore = await stable.balanceOf(owner.address);
             let stableCompensationContractBalanceBefore = await stable.balanceOf(compensation.address);
 
-            await compensation.removeUnused(stable.address, '10100000000');
+            additionalAmount = '280';
+            await compensation.removeUnused(stable.address, '10099999720');
 
             const stableOwnerBalanceAfter = await stable.balanceOf(owner.address);
             let stableCompensationBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableOwnerBalanceAfter.sub(stableOwnerBalanceBefore).toString()).to.be.equal('10100000000');
-            expect(stableCompensationContractBalanceBefore.sub(stableCompensationBalanceAfter).toString()).to.be.equal('10100000000');
+            expect(stableOwnerBalanceAfter.sub(stableOwnerBalanceBefore).toString()).to.be.equal('10099999720');
+            expect(stableCompensationContractBalanceBefore.sub(stableCompensationBalanceAfter).toString()).to.be.equal('10099999720');
 
             // 7. compensation after
             await pToken1.transfer(accounts[0].address, acc0amount1);

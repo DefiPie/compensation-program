@@ -133,11 +133,14 @@ contract Compensation is Service, BlackList {
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amountIn;
         uint duration;
+        uint currentBlock = block.number;
 
-        if (block.number > lastApyBlock) {
+        if (currentBlock > lastApyBlock) {
             duration = lastApyBlock - startBlock;
+        } else if (currentBlock <= startBlock) {
+            duration = 0;
         } else {
-            duration = block.number - startBlock;
+            duration = currentBlock - startBlock;
         }
 
         uint additionalAmount = amount* rewardRatePerBlock * duration / 1e18;
