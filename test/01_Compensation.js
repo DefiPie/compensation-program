@@ -11,6 +11,9 @@ describe("Compensation", function () {
     let controller;
     let ETHUSDPriceFeed;
 
+    let reward_apy;
+    let lastApyBlock;
+
     let compensation_stableCoin;
     let compensation_startBlock;
     let compensation_endBlock;
@@ -33,6 +36,8 @@ describe("Compensation", function () {
         controller = mainMock.address;
         ETHUSDPriceFeed = mainMock.address;
 
+        reward_apy = '250000000000000000'; // 25% - 25e16
+        lastApyBlock = '400';
         let amount = '1000000000000'; // 1,000,000e6
         stable = await ERC20Token.deploy(
             amount,
@@ -53,18 +58,22 @@ describe("Compensation", function () {
             compensation_endBlock,
             controller,
             ETHUSDPriceFeed,
+            reward_apy,
+            lastApyBlock
         );
         console.log("Compensation deployed to:", compensation.address);
     });
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
+            const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed, rewardRatePerBlock, lastApyBlockContract] = await Promise.all([
                 compensation.stableCoin(),
                 compensation.startBlock(),
                 compensation.endBlock(),
                 compensation.controller(),
-                compensation.ETHUSDPriceFeed()
+                compensation.ETHUSDPriceFeed(),
+                compensation.rewardRatePerBlock(),
+                compensation.lastApyBlock()
             ]);
 
             expect(stableCoin).to.be.equal(compensation_stableCoin);
@@ -72,6 +81,8 @@ describe("Compensation", function () {
             expect(endBlock).to.be.equal(compensation_endBlock);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+            expect(rewardRatePerBlock).to.be.equal('118911719939');
+            expect(lastApyBlock).to.be.equal(lastApyBlockContract);
         });
 
         it('check init data', async () => {
@@ -82,6 +93,8 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
 
             await expect(
@@ -91,6 +104,8 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ethers.constants.AddressZero,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -100,6 +115,8 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     ethers.constants.AddressZero,
                     ETHUSDPriceFeed,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
@@ -109,6 +126,8 @@ describe("Compensation", function () {
                     compensation_endBlock,
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
 
             await expect(
@@ -118,6 +137,8 @@ describe("Compensation", function () {
                     '0',
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
 
             await expect(
@@ -127,6 +148,8 @@ describe("Compensation", function () {
                     '100',
                     controller,
                     ETHUSDPriceFeed,
+                    reward_apy,
+                    lastApyBlock
                 )).to.be.revertedWith(revertMessages.compensationConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
         });
     });
@@ -144,6 +167,8 @@ describe("Compensation", function () {
                 compensation_endBlock,
                 controller,
                 ETHUSDPriceFeed,
+                reward_apy,
+                lastApyBlock
             );
             console.log("Compensation deployed to:", compensation.address);
 
@@ -359,6 +384,8 @@ describe("Compensation", function () {
                 await ethers.provider.send('evm_mine');
             }
 
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+
             let stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);
             let stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
 
@@ -367,8 +394,9 @@ describe("Compensation", function () {
             let stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
             let stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('342000000');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('342000000');
+            let additionalAmount = '40'; // 1 block with apy, 1 * 342000000 * 0.25 / 2102400 = 40,6
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('342000040');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('342000040');
 
             stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);
             stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
@@ -378,8 +406,9 @@ describe("Compensation", function () {
             stableAcc0BalanceAfter = await stable.balanceOf(accounts[0].address);
             stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('0');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('0');
+            additionalAmount = '41'; // 2 block with apy = 2 * 342000000 * 0.25 / 2102400 = 81,2 - 40 (claimed)
+            expect(stableAcc0BalanceAfter.sub(stableAcc0BalanceBefore).toString()).to.be.equal('41');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('41');
 
             const stableAcc1BalanceBefore = await stable.balanceOf(accounts[1].address);
             stableRefundContractBalanceBefore = await stable.balanceOf(compensation.address);
@@ -389,8 +418,9 @@ describe("Compensation", function () {
             const stableAcc1BalanceAfter = await stable.balanceOf(accounts[1].address);
             stableRefundBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableAcc1BalanceAfter.sub(stableAcc1BalanceBefore).toString()).to.be.equal('558000000');
-            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('558000000');
+            additionalAmount = '199'; // 3 block with apy = 3 * 558000000 * 0.25 / 2102400 = 199,05
+            expect(stableAcc1BalanceAfter.sub(stableAcc1BalanceBefore).toString()).to.be.equal('558000199');
+            expect(stableRefundContractBalanceBefore.sub(stableRefundBalanceAfter).toString()).to.be.equal('558000199');
 
             await expect(
                 compensation.connect(accounts[0]).addBlackList(accounts[2].address)
@@ -416,13 +446,14 @@ describe("Compensation", function () {
             const stableOwnerBalanceBefore = await stable.balanceOf(owner.address);
             let stableCompensationContractBalanceBefore = await stable.balanceOf(compensation.address);
 
-            await compensation.removeUnused(stable.address, '10100000000');
+            additionalAmount = '280';
+            await compensation.removeUnused(stable.address, '10099999720');
 
             const stableOwnerBalanceAfter = await stable.balanceOf(owner.address);
             let stableCompensationBalanceAfter = await stable.balanceOf(compensation.address);
 
-            expect(stableOwnerBalanceAfter.sub(stableOwnerBalanceBefore).toString()).to.be.equal('10100000000');
-            expect(stableCompensationContractBalanceBefore.sub(stableCompensationBalanceAfter).toString()).to.be.equal('10100000000');
+            expect(stableOwnerBalanceAfter.sub(stableOwnerBalanceBefore).toString()).to.be.equal('10099999720');
+            expect(stableCompensationContractBalanceBefore.sub(stableCompensationBalanceAfter).toString()).to.be.equal('10099999720');
 
             // 7. compensation after
             await pToken1.transfer(accounts[0].address, acc0amount1);
@@ -435,6 +466,74 @@ describe("Compensation", function () {
             await expect(
                 compensation.compensation(pToken1.address, acc0amount1)
             ).to.be.revertedWith(revertMessages.compensationCompensationYouCanConvertPTokensBeforeStartBlockOnly);
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('304');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 205 block with apy, 205 * 342000000 * 0.25 / 2102400 = 8336,9 - 81 = 8255,9
+            expect(amount1).to.be.equal('8255');
+            // 205 block with apy, 205 * 558000000 * 0.25 / 2102400 = 13602,3 − 199 = 13403,3
+            expect(amount2).to.be.equal('13403');
+            // 205 block with apy, 205 * 150000000 * 0.25 / 2102400 = 3656,5 + claim amount = 150003656
+            expect(amount3).to.be.equal('150003656');
+
+            for (let i = 0; i < lastApyBlock - currentBlockNumBefore - 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('399');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 300 block with apy, (399 - 99) * 342000000 * 0.25 / 2102400 = 12200 - 81 = 12119
+            expect(amount1).to.be.equal('12119');
+            // 300 block with apy, (399 - 99) * 558000000 * 0.25 / 2102400 = 19905 − 199 = 19706
+            expect(amount2).to.be.equal('19706');
+            // 300 block with apy, (399 - 99) * 150000000 * 0.25 / 2102400 = 5351 + claim amount = 150005351
+            expect(amount3).to.be.equal('150005351');
+
+            for (let i = 0; i < 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('400');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 400 block with apy, (400 - 99) * 342000000 * 0.25 / 2102400 = 12241 - 81 = 12160
+            expect(amount1).to.be.equal('12160');
+            // 400 block with apy, (400 - 99) * 558000000 * 0.25 / 2102400 = 19972 - 199 = 19773
+            expect(amount2).to.be.equal('19773');
+            // 400 block with apy, (400 - 99) * 150000000 * 0.25 / 2102400 = 5368 + claim amount = 150005368
+            expect(amount3).to.be.equal('150005368');
+
+            for (let i = 0; i < 1; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            currentBlockNumBefore = await ethers.provider.getBlockNumber();
+            expect(currentBlockNumBefore.toString()).to.be.equal('401');
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+
+            // 401 block with apy (last apy block is 400), (400 - 99) * 342000000 * 0.25 / 2102400 = 12241 - 81 = 12160
+            expect(amount1).to.be.equal('12160');
+            // 401 block with apy (last apy block is 400), (400 - 99) * 558000000 * 0.25 / 2102400 = 19972 - 199 = 19773
+            expect(amount2).to.be.equal('19773');
+            // 401 block with apy (last apy block is 400), (400 - 99) * 150000000 * 0.25 / 2102400 = 5368 + claim amount = 150005368
+            expect(amount3).to.be.equal('150005368');
         });
     });
 

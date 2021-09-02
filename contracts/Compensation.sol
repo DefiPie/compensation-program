@@ -10,10 +10,14 @@ contract Compensation is Service, BlackList {
     uint public startBlock;
     uint public endBlock;
 
+    uint public constant blocksPerYear = 2102400; // 1 block ~ 15 seconds
+    uint public rewardRatePerBlock;
+    uint public lastApyBlock;
+
     mapping(address => uint) public pTokens;
 
     struct Balance {
-        uint amount;
+        uint amountIn;
         uint out;
     }
 
@@ -26,7 +30,9 @@ contract Compensation is Service, BlackList {
         uint startBlock_,
         uint endBlock_,
         address controller_,
-        address ETHUSDPriceFeed_
+        address ETHUSDPriceFeed_,
+        uint rewardAPY_,
+        uint lastApyBlock_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             stableCoin_ != address(0)
@@ -37,13 +43,15 @@ contract Compensation is Service, BlackList {
 
         require(
             startBlock_ != 0
-            && endBlock_ != 0,
+            && endBlock_ != 0
+            && lastApyBlock_ !=0,
             "Compensation::Constructor: block num is 0"
         );
 
         require(
             startBlock_ > block.number
-            && startBlock_ < endBlock_,
+            && startBlock_ < endBlock_
+            && lastApyBlock_ > startBlock,
             "Compensation::Constructor: start block must be more than current block and less than end block"
         );
 
@@ -51,6 +59,9 @@ contract Compensation is Service, BlackList {
 
         startBlock = startBlock_;
         endBlock = endBlock_;
+
+        rewardRatePerBlock = rewardAPY_ / blocksPerYear;
+        lastApyBlock = lastApyBlock_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
@@ -84,7 +95,7 @@ contract Compensation is Service, BlackList {
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
 
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
-        balances[msg.sender].amount += stableTokenAmount;
+        balances[msg.sender].amountIn += stableTokenAmount;
         totalAmount += stableTokenAmount;
 
         return true;
@@ -120,20 +131,33 @@ contract Compensation is Service, BlackList {
     }
 
     function calcClaimAmount(address user) public view returns (uint) {
-        uint amount = balances[user].amount;
+        uint amount = balances[user].amountIn;
+        uint duration;
+        uint currentBlock = block.number;
 
-        if (amount == 0 || amount == balances[user].out) {
+        if (currentBlock > lastApyBlock) {
+            duration = lastApyBlock - startBlock;
+        } else if (currentBlock <= startBlock) {
+            duration = 0;
+        } else {
+            duration = currentBlock - startBlock;
+        }
+
+        uint additionalAmount = amount* rewardRatePerBlock * duration / 1e18;
+        uint allAmount = amount + additionalAmount;
+
+        if (allAmount == 0 || allAmount == balances[user].out) {
             return 0;
         }
 
         uint claimAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            claimAmount += amount * checkpoints[i] / totalAmount;
+            claimAmount += allAmount * checkpoints[i] / totalAmount;
         }
 
-        if (claimAmount > amount) {
-            return amount - balances[user].out;
+        if (claimAmount > allAmount) {
+            return allAmount - balances[user].out;
         } else {
             return claimAmount - balances[user].out;
         }

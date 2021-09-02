@@ -8,6 +8,7 @@ import "./Services/Service.sol";
 contract Convert is Service, BlackList {
     address public pTokenFrom;
     address public tokenTo;
+    address public reservoir;
 
     uint public course;
     uint public startBlock;
@@ -23,8 +24,7 @@ contract Convert is Service, BlackList {
     struct Checkpoint {
         uint fromBlock;
         uint toBlock;
-        uint percent; // for example 10e18 is 10%
-        uint amount;
+        uint percent; // for example 1e18 is 100%
     }
 
     // num => block => value
@@ -37,13 +37,15 @@ contract Convert is Service, BlackList {
         uint startBlock_,
         uint endBlock_,
         address controller_,
-        address ETHUSDPriceFeed_
+        address ETHUSDPriceFeed_,
+        address reservoir_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0)
             && controller_ != address(0)
-            && ETHUSDPriceFeed_ != address(0),
+            && ETHUSDPriceFeed_ != address(0)
+            && reservoir_ != address(0),
             "Convert::Constructor: address is 0"
         );
 
@@ -66,9 +68,33 @@ contract Convert is Service, BlackList {
         controller = controller_;
         ETHUSDPriceFeed = ETHUSDPriceFeed_;
 
+        reservoir = reservoir_;
+
         course = course_;
         startBlock = startBlock_;
         endBlock = endBlock_;
+    }
+
+    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
+        require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
+        require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
+        require(fromBlock_ < toBlock_, "Convert::addCheckpoint: to block value must be more than from block value");
+        require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
+        require(percent_ > 0, "Convert::addCheckpoint: percent value must be more than 0");
+
+        uint length = uint(checkpoints.length);
+        if (length > 0) {
+            require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
+        }
+
+        Checkpoint memory cp;
+        cp.fromBlock = fromBlock_;
+        cp.toBlock = toBlock_;
+        cp.percent = percent_;
+
+        checkpoints.push(cp);
+
+        return true;
     }
 
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
@@ -79,39 +105,16 @@ contract Convert is Service, BlackList {
         return true;
     }
 
-    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_, uint amount) public onlyOwner returns (bool) {
-        require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
-        require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
-        require(fromBlock_ < toBlock_, "Convert::addCheckpoint: to block value must be more than from block value");
-        require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
-        require(percent_ > 0, "Convert::addCheckpoint: percent value must be more than 0");
-        require(amount > 0, "Convert::addCheckpoint: amount value must be more than 0");
-
-        uint length = uint(checkpoints.length);
-        if (length > 0) {
-            require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
-        }
-
-        uint amountIn = doTransferIn(msg.sender, tokenTo, amount);
-
-        Checkpoint memory cp;
-        cp.fromBlock = fromBlock_;
-        cp.toBlock = toBlock_;
-        cp.percent = percent_;
-        cp.amount = amountIn;
-
-        checkpoints.push(cp);
-
-        return true;
-    }
-
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
         require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
-        balances[msg.sender].amount += calcConvertAmount(amount);
+        uint calcAmount = calcConvertAmount(amount);
+        balances[msg.sender].amount += calcAmount;
+
+        doTransferIn(reservoir, tokenTo, calcAmount);
 
         return true;
     }
@@ -168,7 +171,7 @@ contract Convert is Service, BlackList {
                 blockAmount = currentBlockNum - checkpoints[i].fromBlock;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 100e18;
+            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 1e18;
         }
 
         return claimAmount - balances[user].out;

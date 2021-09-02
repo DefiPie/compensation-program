@@ -23,7 +23,6 @@ const revertMessages = {
     convertAddCheckpointToBlockValueMustBeLessThanEndBlock: 'Convert::addCheckpoint: to block value must be less than end block',
     convertAddCheckpointBlockValueMustBeMoreThanPreviousLastBlockValue: 'Convert::addCheckpoint: block value must be more than previous last block value',
     convertAddCheckpointPercentValueMustBeMoreThan0: "Convert::addCheckpoint: percent value must be more than 0",
-    convertAddCheckpointAmountValueMustBeMoreThan0: "Convert::addCheckpoint: amount value must be more than 0",
     convertAddCheckpointFromBlockValueMustBeLessThanToBlockValue: "Convert::addCheckpoint: to block value must be more than from block value",
     convertConvertIsNotOwner: 'Ownable: caller is not the owner',
     convertConvertYouCanConvertPTokensBeforeStartBlockOnly: 'Convert::convert: you can convert pTokens before first checkpoint block num only',
