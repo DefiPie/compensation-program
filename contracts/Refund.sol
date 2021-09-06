@@ -10,6 +10,7 @@ contract Refund is Service, BlackList {
     uint public endTimestamp;
 
     mapping(address => Base) public pTokens;
+    address[] pTokensList;
 
     struct Base {
         address baseToken;
@@ -52,6 +53,7 @@ contract Refund is Service, BlackList {
     function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
         pTokens[pToken] = Base({baseToken: baseToken_, course: course_});
         baseTokens[pToken] = baseToken_;
+        pTokensList.push(pToken);
 
         return true;
     }
@@ -141,5 +143,13 @@ contract Refund is Service, BlackList {
 
     function getCheckpointsLength(address baseToken_) public view returns (uint) {
         return checkpoints[baseToken_].length;
+    }
+
+    function getPTokenList() public view returns (address[] memory) {
+        return pTokensList;
+    }
+
+    function getPTokenListLength() public view returns (uint) {
+        return pTokensList.length;
     }
 }

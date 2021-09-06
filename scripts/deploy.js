@@ -1,5 +1,5 @@
 // npx hardhat run --network rinkeby scripts/deploy.js
-// npx hardhat verify --network rinkeby 0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0 "0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0"
+// npx hardhat verify --network rinkeby 0x9715781e1A4E0D4893898dFefB3f025910488354 "0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0"
 
 const hre = require("hardhat");
 const network = hre.network.name;
@@ -21,22 +21,22 @@ async function main() {
 
     // compensation
     let compensation_stableCoin;
-    let compensation_startBlock;
-    let compensation_endBlock;
+    let compensation_startTimestamp;
+    let compensation_endTimestamp;
     let rewardApy;
-    let lastApyBlock;
+    let lastApyTimestamp;
 
     // convert
     let convert_pTokenFrom;
     let convert_tokenTo;
     let convert_course;
-    let convert_startBlock;
-    let convert_endBlock;
+    let convert_startTimestamp;
+    let convert_endTimestamp;
     let reservoir;
 
     // refund
-    let refund_startBlock;
-    let refund_endBlock;
+    let refund_startTimestamp;
+    let refund_endTimestamp;
 
     if (network === 'hardhat') {
         const MainMock = await hre.ethers.getContractFactory("MainMock");
@@ -56,11 +56,11 @@ async function main() {
         console.log("Stable deployed to:", stable.address);
 
         rewardApy = '250000000000000000'; // 25% - 25e16
-        lastApyBlock = '400';
+        lastApyTimestamp = '400';
 
         compensation_stableCoin = stable.address;
-        compensation_startBlock = '10';
-        compensation_endBlock = '100';
+        compensation_startTimestamp = '10';
+        compensation_endTimestamp = '100';
 
         amount = '100000000000000000000';
         const pToken = await ERC20Token.deploy(
@@ -83,157 +83,157 @@ async function main() {
         convert_tokenTo = tokenTo.address;
         convert_course = '20000000000000000'; // 0.02e18
 
-        convert_startBlock = '10';
-        convert_endBlock = '100';
+        convert_startTimestamp = '10';
+        convert_endTimestamp = '100';
         reservoir = deployer.address;
 
-        refund_startBlock = '10';
-        refund_endBlock = '100';
+        refund_startTimestamp = '10';
+        refund_endTimestamp = '100';
 
     } else if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
         ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_RINKEBY;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_RINKEBY;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_RINKEBY;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_RINKEBY;
         rewardApy = process.env.REWARD_APY_RINKEBY;
-        lastApyBlock = process.env.RINKEBY_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.RINKEBY_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_RINKEBY;
         convert_tokenTo = process.env.TOKENTO_CONVERT_RINKEBY;
         convert_course = process.env.COURSE_CONVERT_RINKEBY;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_RINKEBY;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_RINKEBY;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_RINKEBY;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_RINKEBY;
         reservoir = process.env.RINKEBY_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_RINKEBY;
-        refund_endBlock = process.env.END_BLOCK_REFUND_RINKEBY;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_RINKEBY;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_RINKEBY;
     } else if (network === 'mainnet') {
         controller = process.env.CONTROLLER_MAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
 
         compensation_stableCoin = process.env.STABLECOIN_MAINNET;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MAINNET;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MAINNET;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_MAINNET;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_MAINNET;
         rewardApy = process.env.REWARD_APY_MAINNET;
-        lastApyBlock = process.env.MAINNET_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.MAINNET_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
         convert_course = process.env.COURSE_CONVERT_MAINNET;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_MAINNET;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_MAINNET;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_MAINNET;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_MAINNET;
         reservoir = process.env.MAINNET_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_MAINNET;
-        refund_endBlock = process.env.END_BLOCK_REFUND_MAINNET;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_MAINNET;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MAINNET;
     } else if (network === 'bsctestnet') {
         controller = process.env.CONTROLLER_BSCTESTNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCTESTNET;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCTESTNET;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCTESTNET;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCTESTNET;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCTESTNET;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_BSCTESTNET;
         rewardApy = process.env.REWARD_APY_BSCTESTNET;
-        lastApyBlock = process.env.BSCTESTNET_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.BSCTESTNET_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCTESTNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCTESTNET;
         convert_course = process.env.COURSE_CONVERT_BSCTESTNET;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_BSCTESTNET;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_BSCTESTNET;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_BSCTESTNET;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_BSCTESTNET;
         reservoir = process.env.BSCTESTNET_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_BSCTESTNET;
-        refund_endBlock = process.env.END_BLOCK_REFUND_BSCTESTNET;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_BSCTESTNET;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCTESTNET;
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_BSCMAINNET;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_BSCMAINNET;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCMAINNET;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_BSCMAINNET;
         rewardApy = process.env.REWARD_APY_BSCMAINNET;
-        lastApyBlock = process.env.BSCMAINNET_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.BSCMAINNET_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCMAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCMAINNET;
         convert_course = process.env.COURSE_CONVERT_BSCMAINNET;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_BSCMAINNET;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_BSCMAINNET;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_BSCMAINNET;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_BSCMAINNET;
         reservoir = process.env.BSCMAINNET_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_BSCMAINNET;
-        refund_endBlock = process.env.END_BLOCK_REFUND_BSCMAINNET;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_BSCMAINNET;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCMAINNET;
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
         ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
 
         compensation_stableCoin = process.env.STABLECOIN_MUMBAI;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_MUMBAI;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_MUMBAI;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_MUMBAI;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_MUMBAI;
         rewardApy = process.env.REWARD_APY_MUMBAI;
-        lastApyBlock = process.env.MUMBAI_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.MUMBAI_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MUMBAI;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MUMBAI;
         convert_course = process.env.COURSE_CONVERT_MUMBAI;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_MUMBAI;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_MUMBAI;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_MUMBAI;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_MUMBAI;
         reservoir = process.env.MUMBAI_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_MUMBAI;
-        refund_endBlock = process.env.END_BLOCK_REFUND_MUMBAI;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_MUMBAI;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MUMBAI;
     } else if (network === 'polygon') {
         controller = process.env.CONTROLLER_POLYGON;
         ETHUSDPriceFeed = process.env.PRICEFEED_POLYGON;
 
         compensation_stableCoin = process.env.STABLECOIN_POLYGON;
-        compensation_startBlock = process.env.START_BLOCK_COMPENSATION_POLYGON;
-        compensation_endBlock = process.env.END_BLOCK_COMPENSATION_POLYGON;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_POLYGON;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_POLYGON;
         rewardApy = process.env.REWARD_APY_POLYGON;
-        lastApyBlock = process.env.POLYGON_LAST_APY_BLOCK;
+        lastApyTimestamp = process.env.POLYGON_LAST_APY_TIMESTAMP;
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_POLYGON;
         convert_tokenTo = process.env.TOKENTO_CONVERT_POLYGON;
         convert_course = process.env.COURSE_CONVERT_POLYGON;
-        convert_startBlock = process.env.START_BLOCK_CONVERT_POLYGON;
-        convert_endBlock = process.env.END_BLOCK_CONVERT_POLYGON;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_POLYGON;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_POLYGON;
         reservoir = process.env.POLYGON_RESERVOIR;
 
-        refund_startBlock = process.env.START_BLOCK_REFUND_POLYGON;
-        refund_endBlock = process.env.END_BLOCK_REFUND_POLYGON;
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_POLYGON;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_POLYGON;
     } else {
         console.log("Bad network");
     }
-
-    const compensation = await Compensation.deploy(
-        compensation_stableCoin,
-        compensation_startBlock,
-        compensation_endBlock,
-        controller,
-        ETHUSDPriceFeed,
-        rewardApy,
-        lastApyBlock
-    );
-    console.log("Compensation deployed to:", compensation.address);
-
-    const convert = await Convert.deploy(
-        convert_pTokenFrom,
-        convert_tokenTo,
-        convert_course,
-        convert_startBlock,
-        convert_endBlock,
-        controller,
-        ETHUSDPriceFeed,
-        reservoir
-    );
-    console.log("Convert deployed to:", convert.address);
+    //
+    // const compensation = await Compensation.deploy(
+    //     compensation_stableCoin,
+    //     compensation_startTimestamp,
+    //     compensation_endTimestamp,
+    //     controller,
+    //     ETHUSDPriceFeed,
+    //     rewardApy,
+    //     lastApyTimestamp
+    // );
+    // console.log("Compensation deployed to:", compensation.address);
+    //
+    // const convert = await Convert.deploy(
+    //     convert_pTokenFrom,
+    //     convert_tokenTo,
+    //     convert_course,
+    //     convert_startTimestamp,
+    //     convert_endTimestamp,
+    //     controller,
+    //     ETHUSDPriceFeed,
+    //     reservoir
+    // );
+    // console.log("Convert deployed to:", convert.address);
 
     const refund = await Refund.deploy(
-        refund_startBlock,
-        refund_endBlock,
+        refund_startTimestamp,
+        refund_endTimestamp,
         controller,
         ETHUSDPriceFeed
     );
