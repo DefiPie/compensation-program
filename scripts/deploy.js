@@ -207,29 +207,29 @@ async function main() {
     } else {
         console.log("Bad network");
     }
-    //
-    // const compensation = await Compensation.deploy(
-    //     compensation_stableCoin,
-    //     compensation_startTimestamp,
-    //     compensation_endTimestamp,
-    //     controller,
-    //     ETHUSDPriceFeed,
-    //     rewardApy,
-    //     lastApyTimestamp
-    // );
-    // console.log("Compensation deployed to:", compensation.address);
-    //
-    // const convert = await Convert.deploy(
-    //     convert_pTokenFrom,
-    //     convert_tokenTo,
-    //     convert_course,
-    //     convert_startTimestamp,
-    //     convert_endTimestamp,
-    //     controller,
-    //     ETHUSDPriceFeed,
-    //     reservoir
-    // );
-    // console.log("Convert deployed to:", convert.address);
+
+    const compensation = await Compensation.deploy(
+        compensation_stableCoin,
+        compensation_startTimestamp,
+        compensation_endTimestamp,
+        controller,
+        ETHUSDPriceFeed,
+        rewardApy,
+        lastApyTimestamp
+    );
+    console.log("Compensation deployed to:", compensation.address);
+
+    const convert = await Convert.deploy(
+        convert_pTokenFrom,
+        convert_tokenTo,
+        convert_course,
+        convert_startTimestamp,
+        convert_endTimestamp,
+        controller,
+        ETHUSDPriceFeed,
+        reservoir
+    );
+    console.log("Convert deployed to:", convert.address);
 
     const refund = await Refund.deploy(
         refund_startTimestamp,
