@@ -6,8 +6,8 @@ import "./Services/Blacklist.sol";
 import "./Services/Service.sol";
 
 contract Refund is Service, BlackList {
-    uint public startBlock;
-    uint public endBlock;
+    uint public startTimestamp;
+    uint public endTimestamp;
 
     mapping(address => Base) public pTokens;
 
@@ -28,25 +28,25 @@ contract Refund is Service, BlackList {
     mapping(address => uint) public totalAmount;
 
     constructor(
-        uint startBlock_,
-        uint endBlock_,
+        uint startTimestamp_,
+        uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
-            startBlock_ != 0
-            && endBlock_ != 0,
-            "Refund::Constructor: block num is 0"
+            startTimestamp_ != 0
+            && endTimestamp_ != 0,
+            "Refund::Constructor: timestamp is 0"
         );
 
         require(
-            startBlock_ > block.number
-            && startBlock_ < endBlock_,
-            "Refund::Constructor: start block must be more than current block and less than end block"
+            startTimestamp_ > block.timestamp
+            && startTimestamp_ < endTimestamp_,
+            "Refund::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
-        startBlock = startBlock_;
-        endBlock = endBlock_;
+        startTimestamp = startTimestamp_;
+        endTimestamp = endTimestamp_;
     }
 
     function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
@@ -67,7 +67,7 @@ contract Refund is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endBlock < block.number, "Refund::removeUnused: bad timing for the request");
+        require(endTimestamp < block.timestamp, "Refund::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -75,7 +75,7 @@ contract Refund is Service, BlackList {
     }
 
     function refund(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.number < startBlock, "Refund::refund: you can convert pTokens before start block only");
+        require(block.timestamp < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
@@ -105,7 +105,7 @@ contract Refund is Service, BlackList {
     }
 
     function claimToken(address pToken) public returns (bool) {
-        require(block.number > startBlock, "Refund::claimToken: bad timing for the request");
+        require(block.timestamp > startTimestamp, "Refund::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Refund::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender, pToken);

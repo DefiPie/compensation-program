@@ -59,7 +59,7 @@ contract Convert is Service, BlackList {
         require(
             startTimestamp_ > block.timestamp
             && startTimestamp_ < endTimestamp_,
-            "Convert::Constructor: start timestamp must be more than current timestamp and less than end block"
+            "Convert::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
         pTokenFrom = pTokenFrom_;
