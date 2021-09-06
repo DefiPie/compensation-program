@@ -7,12 +7,12 @@ import "./Services/Service.sol";
 contract Compensation is Service, BlackList {
 
     address public stableCoin;
-    uint public startBlock;
-    uint public endBlock;
+    uint public startTimestamp;
+    uint public endTimestamp;
 
-    uint public constant blocksPerYear = 2102400; // 1 block ~ 15 seconds
-    uint public rewardRatePerBlock;
-    uint public lastApyBlock;
+    uint public constant year = 365 days;
+    uint public rewardRatePerSec;
+    uint public lastApyTimestamp;
 
     mapping(address => uint) public pTokens;
 
@@ -27,12 +27,12 @@ contract Compensation is Service, BlackList {
 
     constructor(
         address stableCoin_,
-        uint startBlock_,
-        uint endBlock_,
+        uint startTimestamp_,
+        uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_,
         uint rewardAPY_,
-        uint lastApyBlock_
+        uint lastApyTimestamp_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             stableCoin_ != address(0)
@@ -42,26 +42,26 @@ contract Compensation is Service, BlackList {
         );
 
         require(
-            startBlock_ != 0
-            && endBlock_ != 0
-            && lastApyBlock_ !=0,
-            "Compensation::Constructor: block num is 0"
+            startTimestamp_ != 0
+            && endTimestamp_ != 0
+            && lastApyTimestamp_ !=0,
+            "Compensation::Constructor: timestamp num is 0"
         );
 
         require(
-            startBlock_ > block.number
-            && startBlock_ < endBlock_
-            && lastApyBlock_ > startBlock,
-            "Compensation::Constructor: start block must be more than current block and less than end block"
+            startTimestamp_ > block.timestamp
+            && startTimestamp_ < endTimestamp_
+            && lastApyTimestamp_ > startTimestamp_,
+            "Compensation::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
         stableCoin = stableCoin_;
 
-        startBlock = startBlock_;
-        endBlock = endBlock_;
+        startTimestamp = startTimestamp_;
+        endTimestamp = endTimestamp_;
 
-        rewardRatePerBlock = rewardAPY_ / blocksPerYear;
-        lastApyBlock = lastApyBlock_;
+        rewardRatePerSec = rewardAPY_ / year;
+        lastApyTimestamp = lastApyTimestamp_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
@@ -81,7 +81,7 @@ contract Compensation is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endBlock < block.number, "Compensation::removeUnused: bad timing for the request");
+        require(endTimestamp < block.timestamp, "Compensation::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -89,7 +89,7 @@ contract Compensation is Service, BlackList {
     }
 
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.number < startBlock, "Compensation::compensation: you can convert pTokens before start block only");
+        require(block.timestamp < startTimestamp, "Compensation::compensation: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Compensation::compensation: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
@@ -118,7 +118,7 @@ contract Compensation is Service, BlackList {
     }
 
     function claimToken() public returns (bool) {
-        require(block.number > startBlock, "Compensation::claimToken: bad timing for the request");
+        require(block.timestamp > startTimestamp, "Compensation::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Compensation::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender);
@@ -133,17 +133,17 @@ contract Compensation is Service, BlackList {
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amountIn;
         uint duration;
-        uint currentBlock = block.number;
+        uint currentTimestamp = block.timestamp;
 
-        if (currentBlock > lastApyBlock) {
-            duration = lastApyBlock - startBlock;
-        } else if (currentBlock <= startBlock) {
+        if (currentTimestamp > lastApyTimestamp) {
+            duration = lastApyTimestamp - startTimestamp;
+        } else if (lastApyTimestamp <= startTimestamp) {
             duration = 0;
         } else {
-            duration = currentBlock - startBlock;
+            duration = currentTimestamp - startTimestamp;
         }
 
-        uint additionalAmount = amount* rewardRatePerBlock * duration / 1e18;
+        uint additionalAmount = amount * rewardRatePerSec * duration / 1e18;
         uint allAmount = amount + additionalAmount;
 
         if (allAmount == 0 || allAmount == balances[user].out) {
