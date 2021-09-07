@@ -16,6 +16,7 @@ interface PTokenInterface {
 
 interface PriceOracle {
     function getUnderlyingPrice(address pToken) external view returns (uint);
+    function getPriceInUSD(address underlying) external view returns (uint);
 }
 
 interface ControllerInterface {

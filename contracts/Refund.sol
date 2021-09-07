@@ -18,6 +18,7 @@ contract Refund is Service, BlackList {
     }
 
     mapping(address => address) public baseTokens;
+    address[] baseTokenList;
 
     struct Balance {
         uint amount;
@@ -54,6 +55,7 @@ contract Refund is Service, BlackList {
         pTokens[pToken] = Base({baseToken: baseToken_, course: course_});
         baseTokens[pToken] = baseToken_;
         pTokensList.push(pToken);
+        baseTokenList.push(baseToken_);
 
         return true;
     }
@@ -79,6 +81,7 @@ contract Refund is Service, BlackList {
     function refund(address pToken, uint pTokenAmount) public returns (bool) {
         require(block.timestamp < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
+        require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
 
@@ -151,5 +154,29 @@ contract Refund is Service, BlackList {
 
     function getPTokenListLength() public view returns (uint) {
         return pTokensList.length;
+    }
+
+    function getAllTotalAmount() public view returns (uint) {
+        uint allAmount;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            allAmount += price * totalAmount[baseToken];
+        }
+
+        return allAmount;
+    }
+
+    function pTokensIsAllowed(address pToken_) public view returns (bool) {
+        for (uint i = 0; i < pTokensList.length; i++ ) {
+            if (pTokensList[i] == pToken_) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
