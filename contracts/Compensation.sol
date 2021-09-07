@@ -15,6 +15,7 @@ contract Compensation is Service, BlackList {
     uint public lastApyTimestamp;
 
     mapping(address => uint) public pTokens;
+    address[] pTokensList;
 
     struct Balance {
         uint amountIn;
@@ -66,6 +67,7 @@ contract Compensation is Service, BlackList {
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
         pTokens[pToken] = price;
+        pTokensList.push(pToken);
 
         return true;
     }
@@ -165,5 +167,13 @@ contract Compensation is Service, BlackList {
 
     function getCheckpointsLength() public view returns (uint) {
         return checkpoints.length;
+    }
+
+    function getPTokenList() public view returns (address[] memory) {
+        return pTokensList;
+    }
+
+    function getPTokenListLength() public view returns (uint) {
+        return pTokensList.length;
     }
 }
