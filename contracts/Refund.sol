@@ -179,4 +179,18 @@ contract Refund is Service, BlackList {
 
         return false;
     }
+
+    function getAvailableLiquidity() public view returns (uint) {
+        uint availableLiquidity;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            availableLiquidity += price * ERC20(baseToken).balanceOf(address(this));
+        }
+
+        return availableLiquidity;
+    }
 }
