@@ -202,7 +202,7 @@ contract Refund is Service, BlackList {
         for(uint i = 0; i < baseTokenList.length; i++ ) {
             baseToken = baseTokenList[i];
             price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
-            availableLiquidity += price * ERC20(baseToken).balanceOf(address(this));
+            availableLiquidity += price * ERC20(baseToken).balanceOf(address(this)) / 1e18  / (10 ** ERC20(baseToken).decimals());
         }
 
         return availableLiquidity;
