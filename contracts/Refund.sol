@@ -164,10 +164,24 @@ contract Refund is Service, BlackList {
         for(uint i = 0; i < baseTokenList.length; i++ ) {
             baseToken = baseTokenList[i];
             price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
-            allAmount += price * totalAmount[baseToken];
+            allAmount += price * totalAmount[baseToken] / 1e18 / (10 ** ERC20(baseToken).decimals());
         }
 
         return allAmount;
+    }
+
+    function getUserUsdAmount(address user) public view returns (uint) {
+        uint userTotalAmount;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            userTotalAmount += price * balances[user][baseToken].amount / 1e18 / (10 ** ERC20(baseToken).decimals());
+        }
+
+        return userTotalAmount;
     }
 
     function pTokensIsAllowed(address pToken_) public view returns (bool) {
