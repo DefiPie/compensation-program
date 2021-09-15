@@ -69,7 +69,7 @@ contract Convert is Service, BlackList {
 
         reservoir = reservoir_;
 
-        course = PTokenInterface(pTokenFrom_).exchangeRateCurrent();
+        course = PTokenInterface(pTokenFrom_).exchangeRateStored();
         startTimestamp = startTimestamp_;
         endTimestamp = endTimestamp_;
     }

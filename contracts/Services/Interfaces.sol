@@ -10,7 +10,7 @@ interface FactoryInterface {
 }
 
 interface PTokenInterface {
-    function exchangeRateCurrent() external returns (uint);
+    function exchangeRateStored() external view returns (uint);
     function borrowBalanceStored(address account) external view returns (uint);
     function underlying() external view returns (address);
 }

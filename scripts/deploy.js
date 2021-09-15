@@ -29,7 +29,6 @@ async function main() {
     // convert
     let convert_pTokenFrom;
     let convert_tokenTo;
-    let convert_course;
     let convert_startTimestamp;
     let convert_endTimestamp;
     let reservoir;
@@ -81,7 +80,6 @@ async function main() {
         console.log("TokenTo deployed to:", tokenTo.address);
 
         convert_tokenTo = tokenTo.address;
-        convert_course = '20000000000000000'; // 0.02e18
 
         convert_startTimestamp = '10';
         convert_endTimestamp = '100';
@@ -102,7 +100,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_RINKEBY;
         convert_tokenTo = process.env.TOKENTO_CONVERT_RINKEBY;
-        convert_course = process.env.COURSE_CONVERT_RINKEBY;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_RINKEBY;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_RINKEBY;
         reservoir = process.env.RINKEBY_RESERVOIR;
@@ -121,7 +118,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
-        convert_course = process.env.COURSE_CONVERT_MAINNET;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_MAINNET;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_MAINNET;
         reservoir = process.env.MAINNET_RESERVOIR;
@@ -140,7 +136,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCTESTNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCTESTNET;
-        convert_course = process.env.COURSE_CONVERT_BSCTESTNET;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_BSCTESTNET;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_BSCTESTNET;
         reservoir = process.env.BSCTESTNET_RESERVOIR;
@@ -159,7 +154,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_BSCMAINNET;
         convert_tokenTo = process.env.TOKENTO_CONVERT_BSCMAINNET;
-        convert_course = process.env.COURSE_CONVERT_BSCMAINNET;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_BSCMAINNET;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_BSCMAINNET;
         reservoir = process.env.BSCMAINNET_RESERVOIR;
@@ -178,7 +172,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MUMBAI;
         convert_tokenTo = process.env.TOKENTO_CONVERT_MUMBAI;
-        convert_course = process.env.COURSE_CONVERT_MUMBAI;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_MUMBAI;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_MUMBAI;
         reservoir = process.env.MUMBAI_RESERVOIR;
@@ -197,7 +190,6 @@ async function main() {
 
         convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_POLYGON;
         convert_tokenTo = process.env.TOKENTO_CONVERT_POLYGON;
-        convert_course = process.env.COURSE_CONVERT_POLYGON;
         convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_POLYGON;
         convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_POLYGON;
         reservoir = process.env.POLYGON_RESERVOIR;
@@ -222,7 +214,6 @@ async function main() {
     const convert = await Convert.deploy(
         convert_pTokenFrom,
         convert_tokenTo,
-        convert_course,
         convert_startTimestamp,
         convert_endTimestamp,
         controller,
