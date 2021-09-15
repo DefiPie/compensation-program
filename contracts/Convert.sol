@@ -33,7 +33,6 @@ contract Convert is Service, BlackList {
     constructor(
         address pTokenFrom_,
         address tokenTo_,
-        uint course_,
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
@@ -50,8 +49,7 @@ contract Convert is Service, BlackList {
         );
 
         require(
-            course_ != 0
-            && startTimestamp_ != 0
+            startTimestamp_ != 0
             && endTimestamp_ != 0,
             "Convert::Constructor: num is 0"
         );
@@ -70,7 +68,7 @@ contract Convert is Service, BlackList {
 
         reservoir = reservoir_;
 
-        course = course_;
+        course = PTokenInterface(pTokenFrom_).exchangeRateCurrent();
         startTimestamp = startTimestamp_;
         endTimestamp = endTimestamp_;
     }
