@@ -14,15 +14,17 @@ contract Compensation is Service, BlackList {
     uint public rewardRatePerSec;
     uint public lastApyTimestamp;
 
-    mapping(address => uint) public pTokens;
-    address[] pTokensList;
+    mapping(address => uint) public pTokenPrices;
+    address[] public pTokensList;
 
     struct Balance {
-        uint amountIn;
+        uint amount;
         uint out;
     }
 
     mapping(address => Balance) public balances;
+    mapping(address => mapping(address => uint)) public pTokenAmounts;
+
     uint[] public checkpoints;
     uint public totalAmount;
 
@@ -66,7 +68,7 @@ contract Compensation is Service, BlackList {
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
-        pTokens[pToken] = price;
+        pTokenPrices[pToken] = price;
         pTokensList.push(pToken);
 
         return true;
@@ -93,19 +95,20 @@ contract Compensation is Service, BlackList {
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
         require(block.timestamp < startTimestamp, "Compensation::compensation: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Compensation::compensation: sumBorrow must be less than $1");
-        require(pTokens[pToken] != 0, "Compensation::compensation: pToken is not allowed");
+        require(pTokenPrices[pToken] != 0, "Compensation::compensation: pToken is not allowed");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
+        pTokenAmounts[msg.sender][pToken] = amount;
 
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
-        balances[msg.sender].amountIn += stableTokenAmount;
+        balances[msg.sender].amount += stableTokenAmount;
         totalAmount += stableTokenAmount;
 
         return true;
     }
 
     function calcCompensationAmount(address pToken, uint amount) public view returns (uint) {
-        uint price = pTokens[pToken];
+        uint price = pTokenPrices[pToken];
 
         uint pTokenDecimals = ERC20(pToken).decimals();
         uint stableDecimals = ERC20(stableCoin).decimals();
@@ -134,7 +137,7 @@ contract Compensation is Service, BlackList {
     }
 
     function calcClaimAmount(address user) public view returns (uint) {
-        uint amount = balances[user].amountIn;
+        uint amount = balances[user].amount;
         uint duration;
         uint currentTimestamp = block.timestamp;
 

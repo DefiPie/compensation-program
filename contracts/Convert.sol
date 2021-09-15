@@ -15,6 +15,7 @@ contract Convert is Service, BlackList {
     uint public endTimestamp;
 
     struct Balance {
+        uint pTokenIn;
         uint amount;
         uint out;
     }
@@ -108,6 +109,8 @@ contract Convert is Service, BlackList {
         require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
+
+        balances[msg.sender].pTokenIn += amount;
 
         uint calcAmount = calcConvertAmount(amount);
         balances[msg.sender].amount += calcAmount;
