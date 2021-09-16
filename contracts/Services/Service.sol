@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 
 import "./Interfaces.sol";
 import "./ERC20.sol";
@@ -42,7 +42,11 @@ contract Service {
             uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
             uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
 
-            sumBorrow += price * borrowBalance;
+            if (asset == RegistryInterface(FactoryInterface(ControllerInterface(controller).factory()).registry()).pETH()) {
+                sumBorrow += price * borrowBalance / 10 ** 18;
+            } else {
+                sumBorrow += price * borrowBalance / (10 ** ERC20(PTokenInterface(asset).underlying()).decimals());
+            }
         }
 
         return sumBorrow;

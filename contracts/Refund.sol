@@ -1,22 +1,25 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 
 import "./Services/ERC20.sol";
 import "./Services/Blacklist.sol";
 import "./Services/Service.sol";
 
 contract Refund is Service, BlackList {
-    uint public startBlock;
-    uint public endBlock;
+    uint public startTimestamp;
+    uint public endTimestamp;
 
     mapping(address => Base) public pTokens;
+    address[] pTokensList;
 
     struct Base {
         address baseToken;
         uint course;
     }
 
+    mapping(address => mapping(address => uint)) public pTokenAmounts;
     mapping(address => address) public baseTokens;
+    address[] baseTokenList;
 
     struct Balance {
         uint amount;
@@ -28,30 +31,32 @@ contract Refund is Service, BlackList {
     mapping(address => uint) public totalAmount;
 
     constructor(
-        uint startBlock_,
-        uint endBlock_,
+        uint startTimestamp_,
+        uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
-            startBlock_ != 0
-            && endBlock_ != 0,
-            "Refund::Constructor: block num is 0"
+            startTimestamp_ != 0
+            && endTimestamp_ != 0,
+            "Refund::Constructor: timestamp is 0"
         );
 
         require(
-            startBlock_ > block.number
-            && startBlock_ < endBlock_,
-            "Refund::Constructor: start block must be more than current block and less than end block"
+            startTimestamp_ > block.timestamp
+            && startTimestamp_ < endTimestamp_,
+            "Refund::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
-        startBlock = startBlock_;
-        endBlock = endBlock_;
+        startTimestamp = startTimestamp_;
+        endTimestamp = endTimestamp_;
     }
 
     function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
         pTokens[pToken] = Base({baseToken: baseToken_, course: course_});
         baseTokens[pToken] = baseToken_;
+        pTokensList.push(pToken);
+        baseTokenList.push(baseToken_);
 
         return true;
     }
@@ -67,7 +72,7 @@ contract Refund is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endBlock < block.number, "Refund::removeUnused: bad timing for the request");
+        require(block.timestamp > endTimestamp, "Refund::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -75,10 +80,12 @@ contract Refund is Service, BlackList {
     }
 
     function refund(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.number < startBlock, "Refund::refund: you can convert pTokens before start block only");
+        require(block.timestamp < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
+        require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
+        pTokenAmounts[msg.sender][pToken] = pTokenAmountIn;
 
         address baseToken = baseTokens[pToken];
         uint baseTokenAmount = calcRefundAmount(pToken, pTokenAmountIn);
@@ -105,7 +112,7 @@ contract Refund is Service, BlackList {
     }
 
     function claimToken(address pToken) public returns (bool) {
-        require(block.number > startBlock, "Refund::claimToken: bad timing for the request");
+        require(block.timestamp > startTimestamp, "Refund::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Refund::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender, pToken);
@@ -141,5 +148,65 @@ contract Refund is Service, BlackList {
 
     function getCheckpointsLength(address baseToken_) public view returns (uint) {
         return checkpoints[baseToken_].length;
+    }
+
+    function getPTokenList() public view returns (address[] memory) {
+        return pTokensList;
+    }
+
+    function getPTokenListLength() public view returns (uint) {
+        return pTokensList.length;
+    }
+
+    function getAllTotalAmount() public view returns (uint) {
+        uint allAmount;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            allAmount += price * totalAmount[baseToken] / 1e18 / (10 ** ERC20(baseToken).decimals());
+        }
+
+        return allAmount;
+    }
+
+    function getUserUsdAmount(address user) public view returns (uint) {
+        uint userTotalAmount;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            userTotalAmount += price * balances[user][baseToken].amount / 1e18 / (10 ** ERC20(baseToken).decimals());
+        }
+
+        return userTotalAmount;
+    }
+
+    function pTokensIsAllowed(address pToken_) public view returns (bool) {
+        for (uint i = 0; i < pTokensList.length; i++ ) {
+            if (pTokensList[i] == pToken_) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function getAvailableLiquidity() public view returns (uint) {
+        uint availableLiquidity;
+        uint price;
+        address baseToken;
+
+        for(uint i = 0; i < baseTokenList.length; i++ ) {
+            baseToken = baseTokenList[i];
+            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            availableLiquidity += price * ERC20(baseToken).balanceOf(address(this)) / 1e18  / (10 ** ERC20(baseToken).decimals());
+        }
+
+        return availableLiquidity;
     }
 }

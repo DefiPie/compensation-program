@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 
 import "./Services/ERC20.sol";
 import "./Services/Blacklist.sol";
@@ -11,10 +11,11 @@ contract Convert is Service, BlackList {
     address public reservoir;
 
     uint public course;
-    uint public startBlock;
-    uint public endBlock;
+    uint public startTimestamp;
+    uint public endTimestamp;
 
     struct Balance {
+        uint pTokenIn;
         uint amount;
         uint out;
     }
@@ -22,20 +23,19 @@ contract Convert is Service, BlackList {
     mapping(address => Balance) public balances;
 
     struct Checkpoint {
-        uint fromBlock;
-        uint toBlock;
+        uint fromTimestamp;
+        uint toTimestamp;
         uint percent; // for example 1e18 is 100%
     }
 
-    // num => block => value
+    // num => timestamp => value
     Checkpoint[] public checkpoints;
 
     constructor(
         address pTokenFrom_,
         address tokenTo_,
-        uint course_,
-        uint startBlock_,
-        uint endBlock_,
+        uint startTimestamp_,
+        uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_,
         address reservoir_
@@ -50,16 +50,15 @@ contract Convert is Service, BlackList {
         );
 
         require(
-            course_ != 0
-            && startBlock_ != 0
-            && endBlock_ != 0,
+            startTimestamp_ != 0
+            && endTimestamp_ != 0,
             "Convert::Constructor: num is 0"
         );
 
         require(
-            startBlock_ > block.number
-            && startBlock_ < endBlock_,
-            "Convert::Constructor: start block must be more than current block and less than end block"
+            startTimestamp_ > block.timestamp
+            && startTimestamp_ < endTimestamp_,
+            "Convert::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
         pTokenFrom = pTokenFrom_;
@@ -70,26 +69,26 @@ contract Convert is Service, BlackList {
 
         reservoir = reservoir_;
 
-        course = course_;
-        startBlock = startBlock_;
-        endBlock = endBlock_;
+        course = PTokenInterface(pTokenFrom_).exchangeRateStored();
+        startTimestamp = startTimestamp_;
+        endTimestamp = endTimestamp_;
     }
 
-    function addCheckpointAndTokensAmount(uint fromBlock_, uint toBlock_, uint percent_) public onlyOwner returns (bool) {
-        require(block.number < fromBlock_, "Convert::addCheckpoint: current block value must be less than from block value");
-        require(startBlock < fromBlock_, "Convert::addCheckpoint: start block value must be less than from block value");
-        require(fromBlock_ < toBlock_, "Convert::addCheckpoint: to block value must be more than from block value");
-        require(toBlock_ < endBlock, "Convert::addCheckpoint: to block value must be less than end block");
+    function addCheckpointAndTokensAmount(uint fromTimestamp_, uint toTimestamp_, uint percent_) public onlyOwner returns (bool) {
+        require(block.timestamp < fromTimestamp_, "Convert::addCheckpoint: current timestamp value must be less than from timestamp value");
+        require(startTimestamp < fromTimestamp_, "Convert::addCheckpoint: start timestamp value must be less than from timestamp value");
+        require(fromTimestamp_ < toTimestamp_, "Convert::addCheckpoint: to timestamp value must be more than from timestamp value");
+        require(toTimestamp_ < endTimestamp, "Convert::addCheckpoint: to timestamp value must be less than end timestamp");
         require(percent_ > 0, "Convert::addCheckpoint: percent value must be more than 0");
 
         uint length = uint(checkpoints.length);
         if (length > 0) {
-            require(checkpoints[length - 1].toBlock < fromBlock_, "Convert::addCheckpoint: block value must be more than previous last block value");
+            require(checkpoints[length - 1].toTimestamp < fromTimestamp_, "Convert::addCheckpoint: timestamp value must be more than previous last timestamp value");
         }
 
         Checkpoint memory cp;
-        cp.fromBlock = fromBlock_;
-        cp.toBlock = toBlock_;
+        cp.fromTimestamp = fromTimestamp_;
+        cp.toTimestamp = toTimestamp_;
         cp.percent = percent_;
 
         checkpoints.push(cp);
@@ -98,7 +97,7 @@ contract Convert is Service, BlackList {
     }
 
     function removeUnusedToken(uint amount) public onlyOwner returns (bool) {
-        require(endBlock < block.number, "Convert::removeUnusedToken: bad timing for the request");
+        require(endTimestamp < block.timestamp, "Convert::removeUnusedToken: bad timing for the request");
 
         doTransferOut(tokenTo, msg.sender, amount);
 
@@ -106,10 +105,12 @@ contract Convert is Service, BlackList {
     }
 
     function convert(uint pTokenFromAmount) public returns (bool) {
-        require(block.number < startBlock, "Convert::convert: you can convert pTokens before first checkpoint block num only");
+        require(block.timestamp < startTimestamp, "Convert::convert: you can convert pTokens before first checkpoint timestamp only");
         require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
+
+        balances[msg.sender].pTokenIn += amount;
 
         uint calcAmount = calcConvertAmount(amount);
         balances[msg.sender].amount += calcAmount;
@@ -134,7 +135,7 @@ contract Convert is Service, BlackList {
     }
 
     function claimToken() public returns (bool) {
-        require(block.number > checkpoints[0].fromBlock, "Convert::claimToken: bad timing for the request");
+        require(block.timestamp > checkpoints[0].fromTimestamp, "Convert::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Convert::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender);
@@ -154,24 +155,24 @@ contract Convert is Service, BlackList {
         }
 
         uint claimAmount;
-        uint currentBlockNum = block.number;
-        uint allBlockAmount;
-        uint blockAmount;
+        uint currentBlockTimestamp = block.timestamp;
+        uint delta;
+        uint timestampAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            if (currentBlockNum < checkpoints[i].fromBlock) {
+            if (currentBlockTimestamp < checkpoints[i].fromTimestamp) {
                 break;
             }
 
-            allBlockAmount = checkpoints[i].toBlock - checkpoints[i].fromBlock;
+            delta = checkpoints[i].toTimestamp - checkpoints[i].fromTimestamp;
 
-            if (currentBlockNum >= checkpoints[i].toBlock) {
-                blockAmount = allBlockAmount;
+            if (currentBlockTimestamp >= checkpoints[i].toTimestamp) {
+                timestampAmount = delta;
             } else {
-                blockAmount = currentBlockNum - checkpoints[i].fromBlock;
+                timestampAmount = currentBlockTimestamp - checkpoints[i].fromTimestamp;
             }
 
-            claimAmount += blockAmount * amount * checkpoints[i].percent / allBlockAmount / 1e18;
+            claimAmount += timestampAmount * amount * checkpoints[i].percent / delta / 1e18;
         }
 
         return claimAmount - balances[user].out;

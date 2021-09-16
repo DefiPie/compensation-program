@@ -17,7 +17,7 @@ module.exports = {
         hardhat: {
         },
         mainnet: {
-            url: process.env.ETHEREUM_MAINNET_URL,
+            url: `${process.env.ETHEREUM_MAINNET_URL}`,
             chainId: 1,
             gasPrice: 'auto', // (replace if necessary)
             accounts: [`0x${process.env.ETHEREUM_MAINNET_PRIVATE_KEY}`]
@@ -58,7 +58,7 @@ module.exports = {
     },
     solidity: {
         compilers: [{
-            version: "0.8.4",
+            version: "0.8.7",
             settings: {
                 optimizer: {
                     enabled: true,
