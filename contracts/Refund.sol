@@ -72,7 +72,7 @@ contract Refund is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endTimestamp < block.timestamp, "Refund::removeUnused: bad timing for the request");
+        require(block.timestamp > endTimestamp, "Refund::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 

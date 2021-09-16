@@ -229,6 +229,30 @@ async function main() {
         ETHUSDPriceFeed
     );
     console.log("Refund deployed to:", refund.address);
+
+    if (network === 'rinkeby') {
+        let pUni = '0xb91B6e944F7d0c8FC96F57D4d44bc9aa818b4571';
+        let pBat = '0xc3231C1862e9fE6cee71ce11e6Fb81F2d8470257';
+
+        let pUniPrice =  '20000000000000000'; // 1 pToken1 = $0.02  (1 token = $1)
+        let pBatPrice =   '6000000000000000'; // 1 pToken1 = $0.006 (1 token = $0.3)
+
+        await compensation.addPToken(pUni, pUniPrice);
+        await compensation.addPToken(pBat, pBatPrice);
+
+        let Uni = '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984';
+        let Bat = '0xbf7a7169562078c96f0ec1a8afd6ae50f12e5a99';
+
+        let pUniCourse = '20000000000000000'; // 2e16, 1 baseToken1 = 50 pToken1
+        let pBatCourse = '20408163000000000'; // 20408163e9, 1 baseToken2 = 49 pToken2
+
+        await refund.addRefundPair(pUni, Uni, pUniCourse);
+        await refund.addRefundPair(pBat, Bat, pBatCourse);
+
+        // const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        // let stableCoinContract = await ERC20Token.attach(process.env.STABLECOIN_RINKEBY);
+        // await stableCoinContract.approve(process.env.STABLECOIN_RINKEBY, 1);
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
