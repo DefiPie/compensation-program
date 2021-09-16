@@ -138,6 +138,11 @@ contract Compensation is Service, BlackList {
 
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
+
+        if (amount == 0 || amount == balances[user].out) {
+            return 0;
+        }
+
         uint duration;
         uint currentTimestamp = block.timestamp;
 
