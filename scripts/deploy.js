@@ -246,12 +246,17 @@ async function main() {
         let pUniCourse = '20000000000000000'; // 2e16, 1 baseToken1 = 50 pToken1
         let pBatCourse = '20408163000000000'; // 20408163e9, 1 baseToken2 = 49 pToken2
 
-        await refund.addRefundPair(pUni, Uni, pUniCourse);
-        await refund.addRefundPair(pBat, Bat, pBatCourse);
+        let tx3 = await refund.addRefundPair(pUni, Uni, pUniCourse);
+        let tx4 = await refund.addRefundPair(pBat, Bat, pBatCourse);
 
-        // const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
-        // let stableCoinContract = await ERC20Token.attach(process.env.STABLECOIN_RINKEBY);
-        // await stableCoinContract.approve(process.env.STABLECOIN_RINKEBY, 1);
+        let ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        let stableCoinContract = await ERC20Token.attach(process.env.STABLECOIN_RINKEBY);
+        await stableCoinContract.approve(compensation.address, 1000000000);
+
+        ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
+        let tokenTo = await ERC20Token.attach(process.env.TOKENTO_CONVERT_RINKEBY);
+        await tokenTo.mint(reservoir, 1000000000000000);
+        await tokenTo.approve(convert.address, 1000000000000000);
     }
 }
 
