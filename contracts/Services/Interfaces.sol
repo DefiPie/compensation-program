@@ -29,3 +29,8 @@ interface ControllerInterface {
 interface AggregatorInterface {
     function latestAnswer() external view returns (int256);
 }
+
+interface ConvertInterface {
+    function getPTokenInAmount(address user) external view returns (uint);
+    function pTokenFrom() external view returns (address);
+}

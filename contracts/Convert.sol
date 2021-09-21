@@ -181,4 +181,8 @@ contract Convert is Service, BlackList {
     function getCheckpointsLength() public view returns (uint) {
         return checkpoints.length;
     }
+
+    function getPTokenInAmount(address user) public view returns (uint) {
+        return balances[user].pTokenIn;
+    }
 }
