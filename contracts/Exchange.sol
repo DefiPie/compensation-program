@@ -99,11 +99,11 @@ contract Exchange is Transfers, Ownable {
 
         uint amountIn = doTransferIn(msg.sender, stableCoin, amount);
 
-        deposits[msg.sender][stableCoin] = amountIn;
+        deposits[msg.sender][stableCoin] += amountIn;
 
         uint USDAmountIn = amount * 1e18 / (10 ** ERC20(stableCoin).decimals()); // 1e18 is normalize
 
-        balances[msg.sender].amountIn = USDAmountIn;
+        balances[msg.sender].amountIn += USDAmountIn;
 
         return true;
     }
@@ -112,12 +112,12 @@ contract Exchange is Transfers, Ownable {
         require(getTimeStamp() < startTimestamp, "Exchange::depositNative: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::depositNative: deposit in convert is null");
 
-        depositsETH[msg.sender] = msg.value;
+        depositsETH[msg.sender] += msg.value;
 
         uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-        uint amountIn = msg.value * NativeUSDPrice * 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+        uint amountIn = msg.value * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
 
-        balances[msg.sender].amountIn = amountIn;
+        balances[msg.sender].amountIn += amountIn;
 
         return true;
     }
@@ -134,18 +134,59 @@ contract Exchange is Transfers, Ownable {
 
         doTransferOut(token, msg.sender, amount);
 
-        //@todo check deposits and depositsETH and return extra deposits
+        uint totalAmountIn = balances[msg.sender].amountIn;
+        uint totalTokenPrice = amount * tokenCourse;
+        uint returnUSDValue;
+
+        if (totalAmountIn > totalTokenPrice) {
+            returnUSDValue = totalAmountIn - totalTokenPrice;
+            transferOut(payable(msg.sender), returnUSDValue);
+        }
 
         return true;
     }
 
+    function transferOut(address payable user, uint returnUSDValue) internal {
+        uint ETHValue = depositsETH[user];
+        uint returnValueInUSD = returnUSDValue;
+
+        if (ETHValue > 0) {
+            uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
+            uint amountETHInUSD = ETHValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+
+            if (amountETHInUSD > returnValueInUSD) {
+                user.transfer(returnValueInUSD * 1e8 / NativeUSDPrice);
+            } else {
+                user.transfer(ETHValue);
+                returnValueInUSD -= amountETHInUSD;
+            }
+        }
+
+        for(uint i = 0; i < stableCoins.length; i++) {
+            uint amountInStable = deposits[user][stableCoins[i]];
+            if (amountInStable > 0) {
+                uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals());
+
+                if (amountStableInUSD > returnValueInUSD) {
+                    doTransferOut(stableCoins[i], user, returnValueInUSD * (10 ** ERC20(stableCoins[i]).decimals()) / 1e18);
+                    break;
+                } else {
+                    doTransferOut(stableCoins[i], user, amountInStable);
+                    returnValueInUSD -= amountStableInUSD;
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
     function calcAmount(address user) public view returns (uint) {
         uint amountMax = calcTokenAmountMax(user);
-        uint maxDeposit = amountMax / 2 / 1e18; // max in USD
+        uint maxDeposit = amountMax * tokenCourse / 1e18 / (10 ** 18); // max in USD, 1e18 is for token course, 10**18 is decimals for token amount
         uint amount;
 
         if (maxDeposit > balances[msg.sender].amountIn) {
-            amount = balances[msg.sender].amountIn * 2;
+            amount = balances[msg.sender].amountIn * tokenCourse / 1e18;
         } else {
             amount = amountMax;
         }
