@@ -93,6 +93,7 @@ contract Exchange is Transfers, Ownable {
     }
 
     function deposit(address stableCoin, uint amount) public returns (bool) {
+        require(getTimeStamp() < startTimestamp, "Exchange::deposit: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::deposit: deposit in convert is null");
         require(checkStableCoin(stableCoin), "Exchange::deposit: this stable coin is not allowed");
 
@@ -108,6 +109,7 @@ contract Exchange is Transfers, Ownable {
     }
 
     function depositNative() public payable returns (bool) {
+        require(getTimeStamp() < startTimestamp, "Exchange::depositNative: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::depositNative: deposit in convert is null");
 
         depositsETH[msg.sender] = msg.value;
@@ -121,6 +123,7 @@ contract Exchange is Transfers, Ownable {
     }
 
     function claim() public returns (bool) {
+        require(getTimeStamp() > startTimestamp, "Exchange::claim: bad timing for the request");
         uint amount = calcAmount(msg.sender);
 
         if (amount == 0) {
