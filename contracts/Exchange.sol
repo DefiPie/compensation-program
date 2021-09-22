@@ -101,7 +101,7 @@ contract Exchange is Transfers, Ownable {
 
         deposits[msg.sender][stableCoin] = amountIn;
 
-        uint USDAmountIn = amount / (10 ** ERC20(stableCoin).decimals());
+        uint USDAmountIn = amount * 1e18 / (10 ** ERC20(stableCoin).decimals()); // 1e18 is normalize
 
         balances[msg.sender].amountIn = USDAmountIn;
 
@@ -115,7 +115,7 @@ contract Exchange is Transfers, Ownable {
         depositsETH[msg.sender] = msg.value;
 
         uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-        uint amountIn = msg.value * NativeUSDPrice / 1e8 / 1e18; // 1e8 is chainlink, 1e18 is eth
+        uint amountIn = msg.value * NativeUSDPrice * 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
 
         balances[msg.sender].amountIn = amountIn;
 
