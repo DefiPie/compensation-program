@@ -255,7 +255,7 @@ async function main() {
 
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         let tokenTo = await ERC20Token.attach(process.env.TOKENTO_CONVERT_RINKEBY);
-        await tokenTo.mint(reservoir, 1000000000000000);
+        await tokenTo.mint(1000000000000000);
         await tokenTo.approve(convert.address, 1000000000000000);
     }
 }
