@@ -129,7 +129,7 @@ contract Refund is Service, BlackList {
         address baseToken = baseTokens[pToken];
         uint amount = balances[user][baseToken].amount;
 
-        if (amount == 0 || amount == balances[user][baseToken].out) {
+        if (amount == 0 || amount == balances[user][baseToken].out || block.timestamp <= startTimestamp ) {
             return 0;
         }
 
