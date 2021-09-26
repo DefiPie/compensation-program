@@ -151,7 +151,11 @@ contract Convert is Service, BlackList {
         uint amount = balances[user].amount;
         uint currentTimestamp = block.timestamp;
 
-        if (amount == 0 || amount == balances[user].out || currentTimestamp <= checkpoints[0].fromTimestamp) {
+        if (getCheckpointsLength() == 0
+            || amount == 0
+            || amount == balances[user].out
+            || currentTimestamp <= checkpoints[0].fromTimestamp)
+        {
             return 0;
         }
 
