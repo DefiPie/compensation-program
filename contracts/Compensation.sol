@@ -98,7 +98,7 @@ contract Compensation is Service, BlackList {
         require(pTokenPrices[pToken] != 0, "Compensation::compensation: pToken is not allowed");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] = amount;
+        pTokenAmounts[msg.sender][pToken] += amount;
 
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
         balances[msg.sender].amount += stableTokenAmount;

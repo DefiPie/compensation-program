@@ -90,7 +90,7 @@ contract Refund is Service, BlackList {
         require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] = pTokenAmountIn;
+        pTokenAmounts[msg.sender][pToken] += pTokenAmountIn;
 
         address baseToken = baseTokens[pToken];
         uint baseTokenAmount = calcRefundAmount(pToken, pTokenAmountIn);
