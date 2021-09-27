@@ -155,7 +155,10 @@ contract Compensation is Service, BlackList {
         }
 
         uint additionalAmount = amount * rewardRatePerSec * duration / 1e18;
+        uint additionalTotalAmount = totalAmount * rewardRatePerSec * duration / 1e18;
+
         uint allAmount = amount + additionalAmount;
+        uint allTotalAmount = totalAmount + additionalTotalAmount;
 
         if (allAmount == 0 || allAmount == balances[user].out) {
             return 0;
@@ -164,7 +167,7 @@ contract Compensation is Service, BlackList {
         uint claimAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            claimAmount += allAmount * checkpoints[i] / totalAmount;
+            claimAmount += allAmount * checkpoints[i] / allTotalAmount;
         }
 
         if (claimAmount > allAmount) {
