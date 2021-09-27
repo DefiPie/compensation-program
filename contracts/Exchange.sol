@@ -45,19 +45,19 @@ contract Exchange is Transfers, Ownable {
             convert_ != address(0)
             && token_ != address(0)
             && priceFeed_ != address(0),
-            "Round::Constructor: address is 0"
+            "Exchange::Constructor: address is 0"
         );
 
         require(
             startTimestamp_ != 0
             && endTimestamp_ != 0,
-            "Round::Constructor: timestamp num is 0"
+            "Exchange::Constructor: timestamp num is 0"
         );
 
         require(
             startTimestamp_ > block.timestamp
             && startTimestamp_ < endTimestamp_,
-            "Round::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
+            "Exchange::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
         convert = convert_;
@@ -84,8 +84,8 @@ contract Exchange is Transfers, Ownable {
         return true;
     }
 
-    function getEth(address payable to, uint amount) public onlyOwner returns (bool) {
-        require(getTimeStamp() > endTimestamp, "Exchange::removeEth: bad timing for the request");
+    function getNative(address payable to, uint amount) public onlyOwner returns (bool) {
+        require(getTimeStamp() > endTimestamp, "Exchange::removeNative: bad timing for the request");
 
         to.transfer(amount);
 
