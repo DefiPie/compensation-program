@@ -145,7 +145,9 @@ contract Compensation is Service, BlackList {
         uint currentTimestamp = block.timestamp;
         uint duration;
 
-        if (currentTimestamp > lastApyTimestamp) {
+        if (currentTimestamp <= startTimestamp) {
+            return 0;
+        } else if (currentTimestamp > lastApyTimestamp) {
             duration = lastApyTimestamp - startTimestamp;
         } else if (lastApyTimestamp <= startTimestamp) {
             duration = 0;
