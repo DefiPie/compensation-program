@@ -36,6 +36,17 @@ const revertMessages = {
     refundRefundSumBorrowMustBeLessThan1: 'Refund::refund: sumBorrow must be less than $1',
     refundClaimTokenBadTimingForRequest: 'Refund::claimToken: bad timing for the request',
     refundClaimTokenUserInBlackList: 'Refund::claimToken: user in black list',
+    exchangeClaimBadTimingForRequest: 'Exchange::claim: bad timing for the request',
+    exchangeDepositNativeBadTimingForRequest: 'Exchange::depositNative: bad timing for the request',
+    exchangeDepositBadTimingForRequest: 'Exchange::deposit: bad timing for the request',
+    exchangeDepositDepositInConvertIsNull: 'Exchange::deposit: deposit in convert is null',
+    exchangeDepositNativeDepositInConvertIsNull: 'Exchange::depositNative: deposit in convert is null',
+    exchangeDepositThisStableIsNotAllowed: 'Exchange::deposit: this stable coin is not allowed',
+    exchangeConstructorAddressIs0: 'Exchange::Constructor: address is 0',
+    exchangeConstructorTimestampIs0: 'Exchange::Constructor: timestamp num is 0',
+    exchangeConstructorStartTimeMustBeMoreCurrentAndLessEnd: 'Exchange::Constructor: start timestamp must be more than current timestamp and less than end timestamp',
+    exchangeRemoveTokensBadTimingForRequest: 'Exchange::removeTokens: bad timing for the request',
+    exchangeRemoveNativeBadTimingForRequest: 'Exchange::removeNative: bad timing for the request',
 };
 
 module.exports = {
