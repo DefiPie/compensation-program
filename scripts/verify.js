@@ -1,5 +1,4 @@
-// npx hardhat run --network rinkeby scripts/deploy_erc20.js
-// npx hardhat verify --network rinkeby 0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0 "0xC30b2CDC93d72a45B63472FFB095928a5A9Ab8f0"
+// npx hardhat run --network rinkeby scripts/verify.js
 
 const hre = require("hardhat");
 const dotenv = require('dotenv');
@@ -22,29 +21,32 @@ async function main() {
     //     ],
     // });
 
+    let compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_RINKEBY;
+    let compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_RINKEBY;
+    let lastApyTimestamp = process.env.RINKEBY_LAST_APY_TIMESTAMP;
 
     // Compensation
     await hre.run("verify:verify", {
-        address: '0xa55b29eCBF25e8373147633E9a4786340550CcBb',
+        address: '0x14afac35F561121CDCE3719BC6A6F1f5bd7304f3',
         constructorArguments: [
             "0x1834002dba23c27fe9acd947bdb229c699cc012c",
-            1632411600, // START_TIMESTAMP
-            1632415800, // END_TIMESTAMP
+            compensation_startTimestamp,
+            compensation_endTimestamp,
             "0xd204be259f703503ef2ea03eb401ce6e07254d96",
             "0x8a753747a1fa494ec906ce90e9f37563a8af630e",
             "250000000000000000",
-            1632415200 // LAST_APY_TIMESTAMP
+            lastApyTimestamp
         ],
     });
 
     // Convert
     await hre.run("verify:verify", {
-        address: '0x3B4dF7B8557618c99Ed9A52B7dA6ddf4D1346E10',
+        address: '0xd4897b75aCB0211582E276502fCb7a3cb4099C3B',
         constructorArguments: [
             "0x82aa580e4dDE8e750363962d057feA6FFb138b57",
             "0xCA03cEd418ECC76191FE2E86f0ffe6dD94d9Fa33",
-            1632411600, // START_TIMESTAMP
-            1632415800, // END_TIMESTAMP
+            compensation_startTimestamp,
+            compensation_endTimestamp,
             "0xd204be259f703503ef2ea03eb401ce6e07254d96",
             "0x8a753747a1fa494ec906ce90e9f37563a8af630e",
             "0x32b230795AB78AB51EA7b3F15a23a762aaECd3e0"
@@ -53,10 +55,10 @@ async function main() {
 
     // Refund
     await hre.run("verify:verify", {
-        address: '0x84ef6aC2b2056BdD493702f2D8fe64392449dCbE',
+        address: '0xFD1a4Bc02A4B2EF55c15CC9f822c4c689cF94bdA',
         constructorArguments: [
-            1632411600, // START_TIMESTAMP
-            1632415800, // END_TIMESTAMP
+            compensation_startTimestamp,
+            compensation_endTimestamp,
             "0xd204be259f703503ef2ea03eb401ce6e07254d96",
             "0x8a753747a1fa494ec906ce90e9f37563a8af630e"
         ],
