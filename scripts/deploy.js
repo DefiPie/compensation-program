@@ -36,6 +36,7 @@ async function main() {
     // refund
     let refund_startTimestamp;
     let refund_endTimestamp;
+    let calcPoolPrice;
 
     if (network === 'hardhat') {
         const MainMock = await hre.ethers.getContractFactory("MainMock");
@@ -106,6 +107,8 @@ async function main() {
 
         refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_RINKEBY;
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_RINKEBY;
+        calcPoolPrice = process.env.RINKEBY_CALCPOOLPRICE;
+
     } else if (network === 'mainnet') {
         controller = process.env.CONTROLLER_MAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
@@ -226,7 +229,8 @@ async function main() {
         refund_startTimestamp,
         refund_endTimestamp,
         controller,
-        ETHUSDPriceFeed
+        ETHUSDPriceFeed,
+        calcPoolPrice
     );
     console.log("Refund deployed to:", refund.address);
 

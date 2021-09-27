@@ -15,6 +15,10 @@ interface PTokenInterface {
     function underlying() external view returns (address);
 }
 
+interface CalcPoolPrice {
+    function getPoolPriceInUSD(address asset) external view returns (uint);
+}
+
 interface PriceOracle {
     function getUnderlyingPrice(address pToken) external view returns (uint);
     function getPriceInUSD(address underlying) external view returns (uint);

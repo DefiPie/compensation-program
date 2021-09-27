@@ -149,27 +149,31 @@ contract Convert is Service, BlackList {
 
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
+        uint currentTimestamp = block.timestamp;
 
-        if (amount == 0 || amount == balances[user].out) {
+        if (getCheckpointsLength() == 0
+            || amount == 0
+            || amount == balances[user].out
+            || currentTimestamp <= checkpoints[0].fromTimestamp)
+        {
             return 0;
         }
 
         uint claimAmount;
-        uint currentBlockTimestamp = block.timestamp;
         uint delta;
         uint timestampAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            if (currentBlockTimestamp < checkpoints[i].fromTimestamp) {
+            if (currentTimestamp < checkpoints[i].fromTimestamp) {
                 break;
             }
 
             delta = checkpoints[i].toTimestamp - checkpoints[i].fromTimestamp;
 
-            if (currentBlockTimestamp >= checkpoints[i].toTimestamp) {
+            if (currentTimestamp >= checkpoints[i].toTimestamp) {
                 timestampAmount = delta;
             } else {
-                timestampAmount = currentBlockTimestamp - checkpoints[i].fromTimestamp;
+                timestampAmount = currentTimestamp - checkpoints[i].fromTimestamp;
             }
 
             claimAmount += timestampAmount * amount * checkpoints[i].percent / delta / 1e18;

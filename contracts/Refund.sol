@@ -30,11 +30,14 @@ contract Refund is Service, BlackList {
     mapping(address => uint[]) public checkpoints;
     mapping(address => uint) public totalAmount;
 
+    address public calcPoolPrice;
+
     constructor(
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
-        address ETHUSDPriceFeed_
+        address ETHUSDPriceFeed_,
+        address calcPoolPrice_
     ) Service(controller_, ETHUSDPriceFeed_) {
         require(
             startTimestamp_ != 0
@@ -50,6 +53,8 @@ contract Refund is Service, BlackList {
 
         startTimestamp = startTimestamp_;
         endTimestamp = endTimestamp_;
+
+        calcPoolPrice = calcPoolPrice_;
     }
 
     function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
@@ -85,7 +90,7 @@ contract Refund is Service, BlackList {
         require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] = pTokenAmountIn;
+        pTokenAmounts[msg.sender][pToken] += pTokenAmountIn;
 
         address baseToken = baseTokens[pToken];
         uint baseTokenAmount = calcRefundAmount(pToken, pTokenAmountIn);
@@ -129,7 +134,7 @@ contract Refund is Service, BlackList {
         address baseToken = baseTokens[pToken];
         uint amount = balances[user][baseToken].amount;
 
-        if (amount == 0 || amount == balances[user][baseToken].out) {
+        if (amount == 0 || amount == balances[user][baseToken].out || block.timestamp <= startTimestamp ) {
             return 0;
         }
 
@@ -165,7 +170,7 @@ contract Refund is Service, BlackList {
 
         for(uint i = 0; i < baseTokenList.length; i++ ) {
             baseToken = baseTokenList[i];
-            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            price = CalcPoolPrice(calcPoolPrice).getPoolPriceInUSD(baseToken);
             allAmount += price * totalAmount[baseToken] / 1e18 / (10 ** ERC20(baseToken).decimals());
         }
 
@@ -179,7 +184,7 @@ contract Refund is Service, BlackList {
 
         for(uint i = 0; i < baseTokenList.length; i++ ) {
             baseToken = baseTokenList[i];
-            price = ControllerInterface(controller).getOracle().getPriceInUSD(baseToken);
+            price = CalcPoolPrice(calcPoolPrice).getPoolPriceInUSD(baseToken);
             userTotalAmount += price * balances[user][baseToken].amount / 1e18 / (10 ** ERC20(baseToken).decimals());
         }
 

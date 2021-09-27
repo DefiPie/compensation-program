@@ -98,7 +98,7 @@ contract Compensation is Service, BlackList {
         require(pTokenPrices[pToken] != 0, "Compensation::compensation: pToken is not allowed");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] = amount;
+        pTokenAmounts[msg.sender][pToken] += amount;
 
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
         balances[msg.sender].amount += stableTokenAmount;
@@ -136,17 +136,18 @@ contract Compensation is Service, BlackList {
         return true;
     }
 
-    function calcClaimAmount(address user) public view returns (uint) {
+    function calcUserAdditionAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
+        return calcAdditionAmount(amount);
+    }
 
-        if (amount == 0 || amount == balances[user].out) {
-            return 0;
-        }
-
-        uint duration;
+    function calcAdditionAmount(uint amount) public view returns (uint) {
         uint currentTimestamp = block.timestamp;
+        uint duration;
 
-        if (currentTimestamp > lastApyTimestamp) {
+        if (currentTimestamp <= startTimestamp) {
+            return 0;
+        } else if (currentTimestamp > lastApyTimestamp) {
             duration = lastApyTimestamp - startTimestamp;
         } else if (lastApyTimestamp <= startTimestamp) {
             duration = 0;
@@ -154,8 +155,22 @@ contract Compensation is Service, BlackList {
             duration = currentTimestamp - startTimestamp;
         }
 
-        uint additionalAmount = amount * rewardRatePerSec * duration / 1e18;
+        return amount * rewardRatePerSec * duration / 1e18;
+    }
+
+    function calcClaimAmount(address user) public view returns (uint) {
+        uint amount = balances[user].amount;
+        uint currentTimestamp = block.timestamp;
+
+        if (amount == 0 || amount == balances[user].out || currentTimestamp <= startTimestamp) {
+            return 0;
+        }
+
+        uint additionalAmount = calcAdditionAmount(amount);
+        uint additionalTotalAmount = calcAdditionAmount(totalAmount);
+
         uint allAmount = amount + additionalAmount;
+        uint allTotalAmount = totalAmount + additionalTotalAmount;
 
         if (allAmount == 0 || allAmount == balances[user].out) {
             return 0;
@@ -164,7 +179,7 @@ contract Compensation is Service, BlackList {
         uint claimAmount;
 
         for (uint i = 0; i < checkpoints.length; i++) {
-            claimAmount += allAmount * checkpoints[i] / totalAmount;
+            claimAmount += allAmount * checkpoints[i] / allTotalAmount;
         }
 
         if (claimAmount > allAmount) {
