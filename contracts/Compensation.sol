@@ -136,14 +136,13 @@ contract Compensation is Service, BlackList {
         return true;
     }
 
-    function calcClaimAmount(address user) public view returns (uint) {
+    function calcAdditionAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
+        return calcAdditionAmount(amount);
+    }
+
+    function calcAdditionAmount(uint amount) public view returns (uint) {
         uint currentTimestamp = block.timestamp;
-
-        if (amount == 0 || amount == balances[user].out || currentTimestamp <= startTimestamp) {
-            return 0;
-        }
-
         uint duration;
 
         if (currentTimestamp > lastApyTimestamp) {
@@ -154,8 +153,19 @@ contract Compensation is Service, BlackList {
             duration = currentTimestamp - startTimestamp;
         }
 
-        uint additionalAmount = amount * rewardRatePerSec * duration / 1e18;
-        uint additionalTotalAmount = totalAmount * rewardRatePerSec * duration / 1e18;
+        return amount * rewardRatePerSec * duration / 1e18;
+    }
+
+    function calcClaimAmount(address user) public view returns (uint) {
+        uint amount = balances[user].amount;
+        uint currentTimestamp = block.timestamp;
+
+        if (amount == 0 || amount == balances[user].out || currentTimestamp <= startTimestamp) {
+            return 0;
+        }
+
+        uint additionalAmount = calcAdditionAmount(amount);
+        uint additionalTotalAmount = calcAdditionAmount(totalAmount);
 
         uint allAmount = amount + additionalAmount;
         uint allTotalAmount = totalAmount + additionalTotalAmount;
