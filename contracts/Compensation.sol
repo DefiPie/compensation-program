@@ -136,7 +136,7 @@ contract Compensation is Service, BlackList {
         return true;
     }
 
-    function calcAdditionAmount(address user) public view returns (uint) {
+    function calcUserAdditionAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
         return calcAdditionAmount(amount);
     }
