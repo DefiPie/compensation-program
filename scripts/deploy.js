@@ -203,16 +203,16 @@ async function main() {
         console.log("Bad network");
     }
 
-    const compensation = await Compensation.deploy(
-        compensation_stableCoin,
-        compensation_startTimestamp,
-        compensation_endTimestamp,
-        controller,
-        ETHUSDPriceFeed,
-        rewardApy,
-        lastApyTimestamp
-    );
-    console.log("Compensation deployed to:", compensation.address);
+    // const compensation = await Compensation.deploy(
+    //     compensation_stableCoin,
+    //     compensation_startTimestamp,
+    //     compensation_endTimestamp,
+    //     controller,
+    //     ETHUSDPriceFeed,
+    //     rewardApy,
+    //     lastApyTimestamp
+    // );
+    // console.log("Compensation deployed to:", compensation.address);
 
     // const convert = await Convert.deploy(
     //     convert_pTokenFrom,
