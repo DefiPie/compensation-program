@@ -31,8 +31,8 @@ module.exports = {
         bscmainnet: {
             url: `${process.env.BSCMAINNET_URL}`,
             chainId: 56,
-            gasPrice: 'auto', // (replace if necessary)
-            accounts: [`0x${process.env.BSCMAINNET_PRIVATE_KEY}`]
+            gasPrice: 5000000000, // (replace if necessary)
+            accounts: 'remote'
         },
         bsctestnet: {
             url: `${process.env.BSCTESTNET_URL}`,
