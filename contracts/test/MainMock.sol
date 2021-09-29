@@ -40,4 +40,16 @@ contract MainMock {
         ethPrice = ethPrice_;
     }
 
+    function factory() external returns (address) {
+        return address(this);
+    }
+
+    function registry() external returns (address) {
+        return address(this);
+    }
+
+    function pETH() external returns (address) {
+        return address(this);
+    }
+
 }

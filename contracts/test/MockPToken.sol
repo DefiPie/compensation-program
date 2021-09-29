@@ -27,5 +27,7 @@ contract MockPToken is ERC20 {
         borrowBalance = borrowBalance_;
     }
 
-
+    function underlying() external returns (address) {
+        return address(this);
+    }
 }
