@@ -12,11 +12,11 @@ describe("Compensation", function () {
     let ETHUSDPriceFeed;
 
     let reward_apy;
-    let lastApyBlock;
+    let lastApyBlockTimestamp;
 
     let compensation_stableCoin;
-    let compensation_startBlock;
-    let compensation_endBlock;
+    let compensation_startTimestamp;
+    let compensation_endTimestamp;
 
     let owner, accounts;
 
@@ -37,7 +37,7 @@ describe("Compensation", function () {
         ETHUSDPriceFeed = mainMock.address;
 
         reward_apy = '250000000000000000'; // 25% - 25e16
-        lastApyBlock = '400';
+
         let amount = '1000000000000'; // 1,000,000e6
         stable = await ERC20Token.deploy(
             amount,
@@ -48,98 +48,99 @@ describe("Compensation", function () {
 
         compensation_stableCoin = stable.address;
 
-        let currentBlockNumBefore = await ethers.provider.getBlockNumber();
-        compensation_startBlock = 10 + currentBlockNumBefore;
-        compensation_endBlock = 100 + currentBlockNumBefore;
+        let currentBlockTimestampBefore = await ethers.provider.getBlock();
+        compensation_startTimestamp = 10 + currentBlockTimestampBefore.timestamp;
+        compensation_endTimestamp = 700 + currentBlockTimestampBefore.timestamp;
+        lastApyBlockTimestamp = 400 + currentBlockTimestampBefore.timestamp;
 
         compensation = await Compensation.deploy(
             compensation_stableCoin,
-            compensation_startBlock,
-            compensation_endBlock,
+            compensation_startTimestamp,
+            compensation_endTimestamp,
             controller,
             ETHUSDPriceFeed,
             reward_apy,
-            lastApyBlock
+            lastApyBlockTimestamp
         );
         console.log("Compensation deployed to:", compensation.address);
     });
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [stableCoin, startBlock, endBlock, contractController, contractETHUSDPriceFeed, rewardRatePerBlock, lastApyBlockContract] = await Promise.all([
+            const [stableCoin, startTimestamp, endTimestamp, contractController, contractETHUSDPriceFeed, rewardRatePerSec, lastApyBlockTimestampContract] = await Promise.all([
                 compensation.stableCoin(),
-                compensation.startBlock(),
-                compensation.endBlock(),
+                compensation.startTimestamp(),
+                compensation.endTimestamp(),
                 compensation.controller(),
                 compensation.ETHUSDPriceFeed(),
-                compensation.rewardRatePerBlock(),
-                compensation.lastApyBlock()
+                compensation.rewardRatePerSec(),
+                compensation.lastApyTimestamp()
             ]);
 
             expect(stableCoin).to.be.equal(compensation_stableCoin);
-            expect(startBlock).to.be.equal(compensation_startBlock);
-            expect(endBlock).to.be.equal(compensation_endBlock);
+            expect(startTimestamp).to.be.equal(compensation_startTimestamp);
+            expect(endTimestamp).to.be.equal(compensation_endTimestamp);
             expect(contractController).to.be.equal(controller);
             expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
-            expect(rewardRatePerBlock).to.be.equal('118911719939');
-            expect(lastApyBlock).to.be.equal(lastApyBlockContract);
+            expect(rewardRatePerSec).to.be.equal('7927447995');
+            expect(lastApyBlockTimestamp).to.be.equal(lastApyBlockTimestampContract);
         });
 
         it('check init data', async () => {
             await expect(
                 Compensation.deploy(
                     ethers.constants.AddressZero,
-                    compensation_startBlock,
-                    compensation_endBlock,
+                    compensation_startTimestamp,
+                    compensation_endTimestamp,
                     controller,
                     ETHUSDPriceFeed,
                     reward_apy,
-                    lastApyBlock
+                    lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
 
             await expect(
                 Compensation.deploy(
                     compensation_stableCoin,
-                    compensation_startBlock,
-                    compensation_endBlock,
+                    compensation_startTimestamp,
+                    compensation_endTimestamp,
                     controller,
                     ethers.constants.AddressZero,
                     reward_apy,
-                    lastApyBlock
+                    lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
                 Compensation.deploy(
                     compensation_stableCoin,
-                    compensation_startBlock,
-                    compensation_endBlock,
+                    compensation_startTimestamp,
+                    compensation_endTimestamp,
                     ethers.constants.AddressZero,
                     ETHUSDPriceFeed,
                     reward_apy,
-                    lastApyBlock
+                    lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
                 Compensation.deploy(
                     compensation_stableCoin,
                     '0',
-                    compensation_endBlock,
+                    compensation_endTimestamp,
                     controller,
                     ETHUSDPriceFeed,
                     reward_apy,
-                    lastApyBlock
-                )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
+                    lastApyBlockTimestamp
+                )).to.be.revertedWith(revertMessages.compensationConstructorBlockTimestampIs0);
 
             await expect(
                 Compensation.deploy(
                     compensation_stableCoin,
-                    compensation_startBlock,
+                    compensation_startTimestamp,
                     '0',
                     controller,
                     ETHUSDPriceFeed,
                     reward_apy,
-                    lastApyBlock
-                )).to.be.revertedWith(revertMessages.compensationConstructorBlockNumIs0);
+                    lastApyBlockTimestamp
+                )).to.be.revertedWith(revertMessages.compensationConstructorBlockTimestampIs0);
 
             await expect(
                 Compensation.deploy(
@@ -149,8 +150,8 @@ describe("Compensation", function () {
                     controller,
                     ETHUSDPriceFeed,
                     reward_apy,
-                    lastApyBlock
-                )).to.be.revertedWith(revertMessages.compensationConstructorStartBlockIsMoreThanCurrentBlockAndMoreThanEndBlock);
+                    lastApyBlockTimestamp
+                )).to.be.revertedWith(revertMessages.compensationConstructorStartTimestampIsMoreThanCurrentTimestampAndMoreThanEndTimestamp);
         });
     });
 

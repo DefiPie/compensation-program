@@ -60,7 +60,7 @@ async function main() {
 
         compensation_stableCoin = stable.address;
         compensation_startTimestamp = '10';
-        compensation_endTimestamp = '100';
+        compensation_endTimestamp = '700';
 
         amount = '100000000000000000000';
         const pToken = await ERC20Token.deploy(

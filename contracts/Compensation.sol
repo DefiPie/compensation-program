@@ -48,7 +48,7 @@ contract Compensation is Service, BlackList {
             startTimestamp_ != 0
             && endTimestamp_ != 0
             && lastApyTimestamp_ !=0,
-            "Compensation::Constructor: timestamp num is 0"
+            "Compensation::Constructor: timestamp is 0"
         );
 
         require(
