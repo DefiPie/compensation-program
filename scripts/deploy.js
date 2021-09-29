@@ -163,6 +163,7 @@ async function main() {
 
         refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_BSCMAINNET;
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCMAINNET;
+        calcPoolPrice = process.env.BSCMAINNET_CALCPOOLPRICE;
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
         ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
@@ -203,16 +204,16 @@ async function main() {
         console.log("Bad network");
     }
 
-    // const compensation = await Compensation.deploy(
-    //     compensation_stableCoin,
-    //     compensation_startTimestamp,
-    //     compensation_endTimestamp,
-    //     controller,
-    //     ETHUSDPriceFeed,
-    //     rewardApy,
-    //     lastApyTimestamp
-    // );
-    // console.log("Compensation deployed to:", compensation.address);
+    const compensation = await Compensation.deploy(
+        compensation_stableCoin,
+        compensation_startTimestamp,
+        compensation_endTimestamp,
+        controller,
+        ETHUSDPriceFeed,
+        rewardApy,
+        lastApyTimestamp
+    );
+    console.log("Compensation deployed to:", compensation.address);
 
     // const convert = await Convert.deploy(
     //     convert_pTokenFrom,
