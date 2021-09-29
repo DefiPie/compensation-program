@@ -24,7 +24,7 @@ describe("Compensation", function () {
         MainMock = await hre.ethers.getContractFactory("MainMock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20TokenDec6");
         MockPToken = await hre.ethers.getContractFactory("MockPToken");
-        Compensation = await hre.ethers.getContractFactory("Compensation");
+        Compensation = await hre.ethers.getContractFactory("CompensationExt");
 
         [owner, ...accounts] = await ethers.getSigners();
     });
@@ -159,8 +159,9 @@ describe("Compensation", function () {
         it('check data', async () => {
             // 1. deploy contract
             let block = await ethers.provider.getBlock();
-            compensation_startTimestamp = +block.timestamp + 90;
-            compensation_endTimestamp = +compensation_startTimestamp + 100;
+            compensation_startTimestamp = +block.timestamp + 50;
+            compensation_endTimestamp = +compensation_startTimestamp + 60;
+            lastApyBlockTimestamp = compensation_startTimestamp + 30;
 
             compensation = await Compensation.deploy(
                 compensation_stableCoin,
@@ -356,35 +357,48 @@ describe("Compensation", function () {
             await compensation.connect(accounts[0]).compensation(pToken2.address, acc0amount2);
             await compensation.connect(accounts[1]).compensation(pToken2.address, acc1amount2);
 
-            await pToken2.setBorrowBalanceStored('1000000000');
+            await pToken2.setBorrowBalanceStored('1000000000000000000');
             await mainMock.setUnderlyingPrice(pToken2.address, '1000000000000000000');
-            //
-            // await expect(
-            //     compensation.connect(accounts[2]).compensation(pToken2.address, acc2amount2)
-            // ).to.be.revertedWith(revertMessages.compensationCompensationSumBorrowMustBeLessThan1);
-            //
-            // let pToken2RefundBalanceAfter = await pToken2.balanceOf(compensation.address);
-            // let sum0 = new BigNumber(acc0amount2);
-            // let sum1 = new BigNumber(acc1amount2);
-            //
-            // expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
-            //
-            // // 5. claim
-            // let amount1 = await compensation.calcClaimAmount(accounts[0].address);
-            // expect(amount1.toString()).to.be.equal('342000000'); // 1 pool - $57, 57 tokens with $1 price, 2 pool = $285, 19 tokens with $15 price
-            //
-            // let amount2 = await compensation.calcClaimAmount(accounts[1].address);
-            // expect(amount2.toString()).to.be.equal('558000000'); // 1 pool - $93, 93 tokens with $1 price, 2 pool = $465, 31 tokens with $15 price
-            //
-            // let amount3 = await compensation.calcClaimAmount(accounts[2].address);
-            // expect(amount3.toString()).to.be.equal('150000000');
-            //
-            // let currentBlockNumBefore = await ethers.provider.getBlockNumber();
-            //
-            // for (let i = 0; i < compensation_startTimestamp - currentBlockNumBefore.toString(); i++) {
-            //     await ethers.provider.send('evm_mine');
-            // }
-            //
+
+            await expect(
+                compensation.connect(accounts[2]).compensation(pToken2.address, acc2amount2)
+            ).to.be.revertedWith(revertMessages.compensationCompensationSumBorrowMustBeLessThan1);
+
+            let pToken2RefundBalanceAfter = await pToken2.balanceOf(compensation.address);
+            let sum0 = new BigNumber(acc0amount2);
+            let sum1 = new BigNumber(acc1amount2);
+
+            expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
+
+            // 5. claim
+            let amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            expect(amount1.toString()).to.be.equal('0'); // 1 pool - $57, 57 tokens with $1 price, 2 pool = $285, 19 tokens with $15 price
+
+            let amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            expect(amount2.toString()).to.be.equal('0'); // 1 pool - $93, 93 tokens with $1 price, 2 pool = $465, 31 tokens with $15 price
+
+            let amount3 = await compensation.calcClaimAmount(accounts[2].address);
+            expect(amount3.toString()).to.be.equal('0');
+
+            for (let i = 0; i < 2; i++) {
+                await ethers.provider.send('evm_mine');
+            }
+
+            await compensation.setBlockTimestamp(lastApyBlockTimestamp);
+            let rewardRatePerSec = await compensation.rewardRatePerSec();
+            console.log('rewardRatePerSec', rewardRatePerSec.toString());
+
+            amount1 = await compensation.calcClaimAmount(accounts[0].address);
+            expect(amount1.toString()).to.be.equal('342000081');
+            // 1 pool - $57, 57 tokens with $1 price, 2 pool = $285, 19 tokens with $15 price = $342 + 0,000081 (342 * 25% * (lastblockTimestampApy - startBlockTimestamp) / year)
+
+            amount2 = await compensation.calcClaimAmount(accounts[1].address);
+            expect(amount2.toString()).to.be.equal('558000132'); // 1 pool - $93, 93 tokens with $1 price, 2 pool = $465, 31 tokens with $15 price + percent
+
+            amount3 = await compensation.calcClaimAmount(accounts[2].address);
+            expect(amount3.toString()).to.be.equal('150000035');
+
+
             // currentBlockNumBefore = await ethers.provider.getBlockNumber();
             //
             // let stableAcc0BalanceBefore = await stable.balanceOf(accounts[0].address);

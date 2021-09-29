@@ -52,7 +52,7 @@ contract Compensation is Service, BlackList {
         );
 
         require(
-            startTimestamp_ > block.timestamp
+            startTimestamp_ > getBlockTimestamp()
             && startTimestamp_ < endTimestamp_
             && lastApyTimestamp_ > startTimestamp_,
             "Compensation::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
@@ -85,7 +85,7 @@ contract Compensation is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endTimestamp < block.timestamp, "Compensation::removeUnused: bad timing for the request");
+        require(endTimestamp < getBlockTimestamp(), "Compensation::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -93,7 +93,7 @@ contract Compensation is Service, BlackList {
     }
 
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.timestamp < startTimestamp, "Compensation::compensation: you can convert pTokens before start timestamp only");
+        require(getBlockTimestamp() < startTimestamp, "Compensation::compensation: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Compensation::compensation: sumBorrow must be less than $1");
         require(pTokenPrices[pToken] != 0, "Compensation::compensation: pToken is not allowed");
 
@@ -124,7 +124,7 @@ contract Compensation is Service, BlackList {
     }
 
     function claimToken() public returns (bool) {
-        require(block.timestamp > startTimestamp, "Compensation::claimToken: bad timing for the request");
+        require(getBlockTimestamp() > startTimestamp, "Compensation::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Compensation::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender);
@@ -142,7 +142,7 @@ contract Compensation is Service, BlackList {
     }
 
     function calcAdditionAmount(uint amount) public view returns (uint) {
-        uint currentTimestamp = block.timestamp;
+        uint currentTimestamp = getBlockTimestamp();
         uint duration;
 
         if (currentTimestamp <= startTimestamp) {
@@ -160,7 +160,7 @@ contract Compensation is Service, BlackList {
 
     function calcClaimAmount(address user) public view returns (uint) {
         uint amount = balances[user].amount;
-        uint currentTimestamp = block.timestamp;
+        uint currentTimestamp = getBlockTimestamp();
 
         if (amount == 0 || amount == balances[user].out || currentTimestamp <= startTimestamp) {
             return 0;
@@ -199,5 +199,9 @@ contract Compensation is Service, BlackList {
 
     function getPTokenListLength() public view returns (uint) {
         return pTokensList.length;
+    }
+
+    function getBlockTimestamp() public view virtual returns (uint) {
+        return block.timestamp;
     }
 }
