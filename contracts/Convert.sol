@@ -38,8 +38,9 @@ contract Convert is Service, BlackList {
         uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_,
+        address pETH_,
         address reservoir_
-    ) Service(controller_, ETHUSDPriceFeed_) {
+    ) Service(controller_, ETHUSDPriceFeed_, pETH_) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0)

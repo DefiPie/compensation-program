@@ -31,6 +31,7 @@ async function main() {
     let calcPoolPrice = process.env.RINKEBY_CALCPOOLPRICE;
     let controller = process.env.CONTROLLER_RINKEBY;
     let ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
+    let pETH = process.env.RINKEBY_PETH;
     let reservoir = process.env.RINKEBY_RESERVOIR;
     let compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
     let rewardApy = process.env.REWARD_APY_RINKEBY;
@@ -46,6 +47,7 @@ async function main() {
             compensation_endTimestamp,
             controller,
             ETHUSDPriceFeed,
+            pETH,
             rewardApy,
             lastApyTimestamp
         ],
@@ -61,6 +63,7 @@ async function main() {
             convert_endTimestamp,
             controller,
             ETHUSDPriceFeed,
+            pETH,
             reservoir
         ],
     });
@@ -73,6 +76,7 @@ async function main() {
             refund_endTimestamp,
             controller,
             ETHUSDPriceFeed,
+            pETH,
             calcPoolPrice
         ],
     });

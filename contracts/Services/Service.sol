@@ -7,16 +7,19 @@ import "./Transfers.sol";
 contract Service is Transfers {
     address public controller;
     address public ETHUSDPriceFeed;
+    address public pETH;
 
-    constructor(address controller_, address ETHUSDPriceFeed_) {
+    constructor(address controller_, address ETHUSDPriceFeed_, address pETH_) {
         require(
             controller_ != address(0)
-            && ETHUSDPriceFeed_ != address(0),
+            && ETHUSDPriceFeed_ != address(0)
+            && pETH_ != address(0),
             "Service::Constructor: address is 0"
         );
 
         controller = controller_;
         ETHUSDPriceFeed = ETHUSDPriceFeed_;
+        pETH = pETH_;
     }
 
     function checkBorrowBalance(address account) public view returns (bool) {
@@ -42,7 +45,7 @@ contract Service is Transfers {
             uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
             uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
 
-            if (asset == RegistryInterface(FactoryInterface(ControllerInterface(controller).factory()).registry()).pETH()) {
+            if (asset == pETH) {
                 sumBorrow += price * borrowBalance / 10 ** 18;
             } else {
                 sumBorrow += price * borrowBalance / (10 ** ERC20(PTokenInterface(asset).underlying()).decimals());

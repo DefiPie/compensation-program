@@ -18,6 +18,7 @@ async function main() {
 
     let controller;
     let ETHUSDPriceFeed;
+    let pETH;
 
     // compensation
     let compensation_stableCoin;
@@ -92,6 +93,7 @@ async function main() {
     } else if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
         ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
+        pETH = process.env.RINKEBY_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_RINKEBY;
@@ -112,6 +114,7 @@ async function main() {
     } else if (network === 'mainnet') {
         controller = process.env.CONTROLLER_MAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
+        pETH = process.env.MAINNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_MAINNET;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_MAINNET;
@@ -130,6 +133,7 @@ async function main() {
     } else if (network === 'bsctestnet') {
         controller = process.env.CONTROLLER_BSCTESTNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCTESTNET;
+        pETH = process.env.BSCTESTNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCTESTNET;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCTESTNET;
@@ -148,6 +152,7 @@ async function main() {
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
+        pETH = process.env.BSCMAINNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCMAINNET;
@@ -166,6 +171,7 @@ async function main() {
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
         ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
+        pETH = process.env.MUMBAI_ETH;
 
         compensation_stableCoin = process.env.STABLECOIN_MUMBAI;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_MUMBAI;
@@ -184,6 +190,7 @@ async function main() {
     } else if (network === 'polygon') {
         controller = process.env.CONTROLLER_POLYGON;
         ETHUSDPriceFeed = process.env.PRICEFEED_POLYGON;
+        pETH = process.env.POLYGON_ETH;
 
         compensation_stableCoin = process.env.STABLECOIN_POLYGON;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_POLYGON;
@@ -209,8 +216,9 @@ async function main() {
         compensation_endTimestamp,
         controller,
         ETHUSDPriceFeed,
+        pETH,
         rewardApy,
-        lastApyTimestamp
+        lastApyTimestamp,
     );
     console.log("Compensation deployed to:", compensation.address);
 
@@ -221,6 +229,7 @@ async function main() {
         convert_endTimestamp,
         controller,
         ETHUSDPriceFeed,
+        pETH,
         reservoir
     );
     console.log("Convert deployed to:", convert.address);
@@ -230,6 +239,7 @@ async function main() {
         refund_endTimestamp,
         controller,
         ETHUSDPriceFeed,
+        pETH,
         calcPoolPrice
     );
     console.log("Refund deployed to:", refund.address);
