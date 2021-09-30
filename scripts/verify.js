@@ -24,6 +24,7 @@ async function main() {
 
     let controller;
     let ETHUSDPriceFeed;
+    let pETH
 
     // compensation
     let compensation_stableCoin;
@@ -47,6 +48,7 @@ async function main() {
     if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
         ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
+        pETH = process.env.RINKEBY_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_RINKEBY;
@@ -66,6 +68,7 @@ async function main() {
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
         ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
+        pETH = process.env.BSCMAINNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCMAINNET;
@@ -82,17 +85,38 @@ async function main() {
         refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_BSCMAINNET;
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCMAINNET;
         calcPoolPrice = process.env.BSCMAINNET_CALCPOOLPRICE;
+    } else if (network === 'mainnet') {
+        controller = process.env.CONTROLLER_MAINNET;
+        ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
+        pETH = process.env.MAINNET_PETH;
+
+        compensation_stableCoin = process.env.STABLECOIN_MAINNET;
+        compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_MAINNET;
+        compensation_endTimestamp = process.env.END_TIMESTAMP_COMPENSATION_MAINNET;
+        rewardApy = process.env.REWARD_APY_MAINNET;
+        lastApyTimestamp = process.env.MAINNET_LAST_APY_TIMESTAMP;
+
+        convert_pTokenFrom = process.env.PTOKENFROM_CONVERT_MAINNET;
+        convert_tokenTo = process.env.TOKENTO_CONVERT_MAINNET;
+        convert_startTimestamp = process.env.START_TIMESTAMP_CONVERT_MAINNET;
+        convert_endTimestamp = process.env.END_TIMESTAMP_CONVERT_MAINNET;
+        reservoir = process.env.MAINNET_RESERVOIR;
+
+        refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_MAINNET;
+        refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MAINNET;
+        calcPoolPrice = process.env.MAINNET_CALCPOOLPRICE;
     }
 
     // Compensation
     await hre.run("verify:verify", {
-        address: '0xf59e7fF65f5A3b1AF5009D5F95777189712018C9',
+        address: '0x8ca3BD13BbF3468D48369DF508b9B614D9aa1802',
         constructorArguments: [
             compensation_stableCoin,
             compensation_startTimestamp,
             compensation_endTimestamp,
             controller,
             ETHUSDPriceFeed,
+            pETH,
             rewardApy,
             lastApyTimestamp
         ],
@@ -113,16 +137,16 @@ async function main() {
     // });
 
     // Refund
-    await hre.run("verify:verify", {
-        address: '0x42EFFb0C735006F04f4C0648a377ECf23e9BA2Dd',
-        constructorArguments: [
-            refund_startTimestamp,
-            refund_endTimestamp,
-            controller,
-            ETHUSDPriceFeed,
-            calcPoolPrice
-        ],
-    });
+    // await hre.run("verify:verify", {
+    //     address: '0x42EFFb0C735006F04f4C0648a377ECf23e9BA2Dd',
+    //     constructorArguments: [
+    //         refund_startTimestamp,
+    //         refund_endTimestamp,
+    //         controller,
+    //         ETHUSDPriceFeed,
+    //         calcPoolPrice
+    //     ],
+    // });
 }
 
 // We recommend this pattern to be able to use async/await everywhere
