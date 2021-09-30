@@ -168,6 +168,7 @@ async function main() {
 
         refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_BSCMAINNET;
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCMAINNET;
+        calcPoolPrice = process.env.BSCMAINNET_CALCPOOLPRICE;
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
         ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
