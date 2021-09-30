@@ -22,11 +22,7 @@ contract Service is Transfers {
     function checkBorrowBalance(address account) public view returns (bool) {
         uint sumBorrow = calcAccountBorrow(account);
 
-        if (sumBorrow != 0) {
-            return sumBorrow < 1;
-        }
-
-        return true;
+        return sumBorrow < 1;
     }
 
     function calcAccountBorrow(address account) public view returns (uint) {
@@ -39,11 +35,8 @@ contract Service is Transfers {
             uint borrowBalance = PTokenInterface(asset).borrowBalanceStored(account);
             uint price = ControllerInterface(controller).getOracle().getUnderlyingPrice(asset);
 
-            if (asset == pETH) {
-                sumBorrow += price * borrowBalance / 10 ** 18;
-            } else {
-                sumBorrow += price * borrowBalance / (10 ** ERC20(PTokenInterface(asset).underlying()).decimals());
-            }
+            uint underlyingDecimal = asset == pETH ? 18 : ERC20(PTokenInterface(asset).underlying()).decimals();
+            sumBorrow += price * borrowBalance / 10 ** underlyingDecimal;
         }
 
         return sumBorrow;
