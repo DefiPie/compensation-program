@@ -36,10 +36,9 @@ contract Refund is Service, BlackList {
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
-        address ETHUSDPriceFeed_,
         address pETH_,
         address calcPoolPrice_
-    ) Service(controller_, ETHUSDPriceFeed_, pETH_) {
+    ) Service(controller_, pETH_) {
         require(
             startTimestamp_ != 0
             && endTimestamp_ != 0,

@@ -46,7 +46,6 @@ async function main() {
 
     if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
-        ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_RINKEBY;
@@ -65,7 +64,6 @@ async function main() {
         calcPoolPrice = process.env.RINKEBY_CALCPOOLPRICE;
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
-        ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
         compensation_startTimestamp = process.env.START_TIMESTAMP_COMPENSATION_BSCMAINNET;
@@ -92,7 +90,6 @@ async function main() {
             compensation_startTimestamp,
             compensation_endTimestamp,
             controller,
-            ETHUSDPriceFeed,
             rewardApy,
             lastApyTimestamp
         ],
@@ -107,7 +104,6 @@ async function main() {
     //         convert_startTimestamp,
     //         convert_endTimestamp,
     //         controller,
-    //         ETHUSDPriceFeed,
     //         reservoir
     //     ],
     // });
@@ -119,7 +115,6 @@ async function main() {
             refund_startTimestamp,
             refund_endTimestamp,
             controller,
-            ETHUSDPriceFeed,
             calcPoolPrice
         ],
     });

@@ -67,7 +67,6 @@ describe("Convert", function () {
             convert_startBlock,
             convert_endBlock,
             controller,
-            ETHUSDPriceFeed,
             reservoir
         );
         console.log("Convert deployed to:", convert.address);

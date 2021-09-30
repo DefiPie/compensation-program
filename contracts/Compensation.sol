@@ -33,15 +33,13 @@ contract Compensation is Service, BlackList {
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
-        address ETHUSDPriceFeed_,
         address pETH_,
         uint rewardAPY_,
         uint lastApyTimestamp_
-    ) Service(controller_, ETHUSDPriceFeed_, pETH_) {
+    ) Service(controller_, pETH_) {
         require(
             stableCoin_ != address(0)
-            && controller_ != address(0)
-            && ETHUSDPriceFeed_ != address(0),
+            && controller_ != address(0),
             "Compensation::Constructor: address is 0"
         );
 

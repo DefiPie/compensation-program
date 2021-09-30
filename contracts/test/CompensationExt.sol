@@ -11,7 +11,6 @@ contract CompensationExt is Compensation {
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
-        address ETHUSDPriceFeed_,
         address pETH_,
         uint rewardAPY_,
         uint lastApyTimestamp_
@@ -20,7 +19,6 @@ contract CompensationExt is Compensation {
         startTimestamp_,
         endTimestamp_,
         controller_,
-        ETHUSDPriceFeed_,
         pETH_,
         rewardAPY_,
         lastApyTimestamp_

@@ -17,7 +17,6 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     let controller;
-    let ETHUSDPriceFeed;
     let pETH;
 
     // compensation
@@ -45,7 +44,6 @@ async function main() {
         console.log("MainMock deployed to:", mainMock.address);
 
         controller = mainMock.address;
-        ETHUSDPriceFeed = mainMock.address;
 
         const ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         let amount = '100000000000000000000';
@@ -92,7 +90,6 @@ async function main() {
 
     } else if (network === 'rinkeby') {
         controller = process.env.CONTROLLER_RINKEBY;
-        ETHUSDPriceFeed = process.env.PRICEFEED_RINKEBY;
         pETH = process.env.RINKEBY_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_RINKEBY;
@@ -113,7 +110,6 @@ async function main() {
 
     } else if (network === 'mainnet') {
         controller = process.env.CONTROLLER_MAINNET;
-        ETHUSDPriceFeed = process.env.PRICEFEED_MAINNET;
         pETH = process.env.MAINNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_MAINNET;
@@ -132,7 +128,6 @@ async function main() {
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MAINNET;
     } else if (network === 'bsctestnet') {
         controller = process.env.CONTROLLER_BSCTESTNET;
-        ETHUSDPriceFeed = process.env.PRICEFEED_BSCTESTNET;
         pETH = process.env.BSCTESTNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCTESTNET;
@@ -151,7 +146,6 @@ async function main() {
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_BSCTESTNET;
     } else if (network === 'bscmainnet') {
         controller = process.env.CONTROLLER_BSCMAINNET;
-        ETHUSDPriceFeed = process.env.PRICEFEED_BSCMAINNET;
         pETH = process.env.BSCMAINNET_PETH;
 
         compensation_stableCoin = process.env.STABLECOIN_BSCMAINNET;
@@ -171,7 +165,6 @@ async function main() {
         calcPoolPrice = process.env.BSCMAINNET_CALCPOOLPRICE;
     } else if (network === 'mumbai') {
         controller = process.env.CONTROLLER_MUMBAI;
-        ETHUSDPriceFeed = process.env.PRICEFEED_MUMBAI;
         pETH = process.env.MUMBAI_ETH;
 
         compensation_stableCoin = process.env.STABLECOIN_MUMBAI;
@@ -190,7 +183,6 @@ async function main() {
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MUMBAI;
     } else if (network === 'polygon') {
         controller = process.env.CONTROLLER_POLYGON;
-        ETHUSDPriceFeed = process.env.PRICEFEED_POLYGON;
         pETH = process.env.POLYGON_ETH;
 
         compensation_stableCoin = process.env.STABLECOIN_POLYGON;
@@ -229,7 +221,6 @@ async function main() {
         convert_startTimestamp,
         convert_endTimestamp,
         controller,
-        ETHUSDPriceFeed,
         pETH,
         reservoir
     );
@@ -239,7 +230,6 @@ async function main() {
         refund_startTimestamp,
         refund_endTimestamp,
         controller,
-        ETHUSDPriceFeed,
         pETH,
         calcPoolPrice
     );

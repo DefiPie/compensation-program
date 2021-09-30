@@ -37,15 +37,13 @@ contract Convert is Service, BlackList {
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
-        address ETHUSDPriceFeed_,
         address pETH_,
         address reservoir_
-    ) Service(controller_, ETHUSDPriceFeed_, pETH_) {
+    ) Service(controller_, pETH_) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0)
             && controller_ != address(0)
-            && ETHUSDPriceFeed_ != address(0)
             && reservoir_ != address(0),
             "Convert::Constructor: address is 0"
         );
@@ -66,7 +64,6 @@ contract Convert is Service, BlackList {
         tokenTo = tokenTo_;
 
         controller = controller_;
-        ETHUSDPriceFeed = ETHUSDPriceFeed_;
 
         reservoir = reservoir_;
 

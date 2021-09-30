@@ -9,7 +9,7 @@ describe("Compensation", function () {
     let stable;
 
     let controller;
-    let ETHUSDPriceFeed;
+    let pETH;
 
     let reward_apy;
     let lastApyBlockTimestamp;
@@ -34,7 +34,7 @@ describe("Compensation", function () {
         console.log("MainMock deployed to:", mainMock.address);
 
         controller = mainMock.address;
-        ETHUSDPriceFeed = mainMock.address;
+        pETH = mainMock.address;
 
         reward_apy = '250000000000000000'; // 25% - 25e16
 
@@ -58,7 +58,7 @@ describe("Compensation", function () {
             compensation_startTimestamp,
             compensation_endTimestamp,
             controller,
-            ETHUSDPriceFeed,
+            pETH,
             reward_apy,
             lastApyBlockTimestamp
         );
@@ -67,12 +67,12 @@ describe("Compensation", function () {
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [stableCoin, startTimestamp, endTimestamp, contractController, contractETHUSDPriceFeed, rewardRatePerSec, lastApyBlockTimestampContract] = await Promise.all([
+            const [stableCoin, startTimestamp, endTimestamp, contractController, pETH, rewardRatePerSec, lastApyBlockTimestampContract] = await Promise.all([
                 compensation.stableCoin(),
                 compensation.startTimestamp(),
                 compensation.endTimestamp(),
                 compensation.controller(),
-                compensation.ETHUSDPriceFeed(),
+                compensation.pETH(),
                 compensation.rewardRatePerSec(),
                 compensation.lastApyTimestamp()
             ]);
@@ -81,7 +81,6 @@ describe("Compensation", function () {
             expect(startTimestamp).to.be.equal(compensation_startTimestamp);
             expect(endTimestamp).to.be.equal(compensation_endTimestamp);
             expect(contractController).to.be.equal(controller);
-            expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
             expect(rewardRatePerSec).to.be.equal('7927447995');
             expect(lastApyBlockTimestamp).to.be.equal(lastApyBlockTimestampContract);
         });
@@ -93,7 +92,7 @@ describe("Compensation", function () {
                     compensation_startTimestamp,
                     compensation_endTimestamp,
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
                     reward_apy,
                     lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.compensationConstructorAddressIs0);
@@ -115,7 +114,7 @@ describe("Compensation", function () {
                     compensation_startTimestamp,
                     compensation_endTimestamp,
                     ethers.constants.AddressZero,
-                    ETHUSDPriceFeed,
+                    pETH,
                     reward_apy,
                     lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
@@ -126,7 +125,7 @@ describe("Compensation", function () {
                     '0',
                     compensation_endTimestamp,
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
                     reward_apy,
                     lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockTimestampIs0);
@@ -137,7 +136,7 @@ describe("Compensation", function () {
                     compensation_startTimestamp,
                     '0',
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
                     reward_apy,
                     lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.compensationConstructorBlockTimestampIs0);
@@ -148,7 +147,7 @@ describe("Compensation", function () {
                     '200',
                     '100',
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
                     reward_apy,
                     lastApyBlockTimestamp
                 )).to.be.revertedWith(revertMessages.compensationConstructorStartTimestampIsMoreThanCurrentTimestampAndMoreThanEndTimestamp);
@@ -168,7 +167,7 @@ describe("Compensation", function () {
                 compensation_startTimestamp,
                 compensation_endTimestamp,
                 controller,
-                ETHUSDPriceFeed,
+                pETH,
                 reward_apy,
                 lastApyBlockTimestamp
             );
