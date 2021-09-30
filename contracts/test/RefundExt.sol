@@ -1,29 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import "../Compensation.sol";
+import "../Refund.sol";
 
-contract CompensationExt is Compensation {
+contract RefundExt is Refund {
     uint public blockTimestamp;
 
     constructor(
-        address stableCoin_,
         uint startTimestamp_,
         uint endTimestamp_,
         address controller_,
         address ETHUSDPriceFeed_,
         address pETH_,
-        uint rewardAPY_,
-        uint lastApyTimestamp_
-    ) Compensation(
-        stableCoin_,
+        address calcPoolPrice_
+    ) Refund (
         startTimestamp_,
         endTimestamp_,
         controller_,
         ETHUSDPriceFeed_,
         pETH_,
-        rewardAPY_,
-        lastApyTimestamp_
+        calcPoolPrice_
     ) {}
 
     function setBlockTimestamp(uint blockTimestamp_) public {

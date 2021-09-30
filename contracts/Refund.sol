@@ -47,7 +47,7 @@ contract Refund is Service, BlackList {
         );
 
         require(
-            startTimestamp_ > block.timestamp
+            startTimestamp_ > getBlockTimestamp()
             && startTimestamp_ < endTimestamp_,
             "Refund::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
@@ -78,7 +78,7 @@ contract Refund is Service, BlackList {
     }
 
     function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(block.timestamp > endTimestamp, "Refund::removeUnused: bad timing for the request");
+        require(getBlockTimestamp() > endTimestamp, "Refund::removeUnused: bad timing for the request");
 
         doTransferOut(token, msg.sender, amount);
 
@@ -86,7 +86,7 @@ contract Refund is Service, BlackList {
     }
 
     function refund(address pToken, uint pTokenAmount) public returns (bool) {
-        require(block.timestamp < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
+        require(getBlockTimestamp() < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
         require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
         require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
@@ -118,7 +118,7 @@ contract Refund is Service, BlackList {
     }
 
     function claimToken(address pToken) public returns (bool) {
-        require(block.timestamp > startTimestamp, "Refund::claimToken: bad timing for the request");
+        require(getBlockTimestamp() > startTimestamp, "Refund::claimToken: bad timing for the request");
         require(!isBlackListed[msg.sender], "Refund::claimToken: user in black list");
 
         uint amount = calcClaimAmount(msg.sender, pToken);
@@ -135,7 +135,7 @@ contract Refund is Service, BlackList {
         address baseToken = baseTokens[pToken];
         uint amount = balances[user][baseToken].amount;
 
-        if (amount == 0 || amount == balances[user][baseToken].out || block.timestamp <= startTimestamp ) {
+        if (amount == 0 || amount == balances[user][baseToken].out || getBlockTimestamp() <= startTimestamp ) {
             return 0;
         }
 
@@ -214,5 +214,9 @@ contract Refund is Service, BlackList {
         }
 
         return availableLiquidity;
+    }
+
+    function getBlockTimestamp() public view virtual returns (uint) {
+        return block.timestamp;
     }
 }
