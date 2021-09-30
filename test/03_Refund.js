@@ -8,10 +8,11 @@ describe("Refund", function () {
     let mainMock, MainMock, ERC20Token, MockPToken;
 
     let controller;
-    let ETHUSDPriceFeed;
+    let pETH;
+    let calcPoolPrice;
 
-    let refund_startBlock;
-    let refund_endBlock;
+    let refund_startTimestamp;
+    let refund_endTimestamp;
 
     let owner, accounts;
 
@@ -19,7 +20,7 @@ describe("Refund", function () {
         MainMock = await hre.ethers.getContractFactory("MainMock");
         ERC20Token = await hre.ethers.getContractFactory("ERC20Token");
         MockPToken = await hre.ethers.getContractFactory("MockPToken");
-        Refund = await hre.ethers.getContractFactory("Refund");
+        Refund = await hre.ethers.getContractFactory("RefundExt");
 
         [owner, ...accounts] = await ethers.getSigners();
     });
@@ -29,105 +30,106 @@ describe("Refund", function () {
         console.log("MainMock deployed to:", mainMock.address);
 
         controller = mainMock.address;
-        ETHUSDPriceFeed = mainMock.address;
+        pETH = mainMock.address;
+        calcPoolPrice = mainMock.address;
 
-        let currentBlockNumBefore = await ethers.provider.getBlockNumber();
-        refund_startBlock = 10 + currentBlockNumBefore;
-        refund_endBlock = 100 + currentBlockNumBefore;
+        let currentBlockTimestampBefore = await ethers.provider.getBlock();
+        refund_startTimestamp = 10 + currentBlockTimestampBefore.timestamp;
+        refund_endTimestamp = 700 + currentBlockTimestampBefore.timestamp;
 
         refund = await Refund.deploy(
-            refund_startBlock,
-            refund_endBlock,
+            refund_startTimestamp,
+            refund_endTimestamp,
             controller,
-            ETHUSDPriceFeed,
+            pETH,
+            calcPoolPrice
         );
         console.log("Refund deployed to:", refund.address);
     });
 
     describe('Constructor', async () => {
         it('check deploy data', async () => {
-            const [startBlock, endBlock, contractController, contractETHUSDPriceFeed] = await Promise.all([
-                refund.startBlock(),
-                refund.endBlock(),
+            const [startTimestamp, endTimestamp, contractController, contractPETH, contractCalcPoolPrice] = await Promise.all([
+                refund.startTimestamp(),
+                refund.endTimestamp(),
                 refund.controller(),
-                refund.ETHUSDPriceFeed()
+                refund.pETH(),
+                refund.calcPoolPrice()
             ]);
 
-            expect(startBlock).to.be.equal(refund_startBlock);
-            expect(endBlock).to.be.equal(refund_endBlock);
+            expect(startTimestamp).to.be.equal(refund_startTimestamp);
+            expect(endTimestamp).to.be.equal(refund_endTimestamp);
             expect(contractController).to.be.equal(controller);
-            expect(contractETHUSDPriceFeed).to.be.equal(ETHUSDPriceFeed);
+            expect(contractPETH).to.be.equal(pETH);
+            expect(contractCalcPoolPrice).to.be.equal(calcPoolPrice);
         });
 
         it('check init data', async () => {
             await expect(
                 Refund.deploy(
                     '0',
-                    refund_endBlock,
+                    refund_endTimestamp,
                     controller,
-                    ETHUSDPriceFeed,
-                )).to.be.revertedWith(revertMessages.refundConstructorBlockNumIs0);
+                    pETH,
+                    calcPoolPrice
+                )).to.be.revertedWith(revertMessages.refundConstructorBlockTimestampIs0);
 
             await expect(
                 Refund.deploy(
-                    refund_startBlock,
+                    refund_startTimestamp,
                     '0',
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
+                    calcPoolPrice
                 )
-            ).to.be.revertedWith(revertMessages.refundConstructorBlockNumIs0);
+            ).to.be.revertedWith(revertMessages.refundConstructorBlockTimestampIs0);
 
             await expect(
                 Refund.deploy(
                     '200',
                     '100',
                     controller,
-                    ETHUSDPriceFeed,
+                    pETH,
+                    calcPoolPrice
                 )
-            ).to.be.revertedWith(revertMessages.refundConstructorStartBlockMustBeMoreThanCurrentBlockAndMoreThanEndBlock);
+            ).to.be.revertedWith(revertMessages.refundConstructorStartTimestampMustBeMoreThanCurrentTimestampAndLessThanEndTimestamp);
 
             await expect(
                 Refund.deploy(
-                    refund_startBlock,
-                    refund_endBlock,
+                    refund_startTimestamp,
+                    refund_endTimestamp,
                     ethers.constants.AddressZero,
-                    ETHUSDPriceFeed,
+                    pETH,
+                    calcPoolPrice
                 )
             ).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
 
             await expect(
                 Refund.deploy(
-                    refund_startBlock,
-                    refund_endBlock,
+                    refund_startTimestamp,
+                    refund_endTimestamp,
                     controller,
                     ethers.constants.AddressZero,
+                    calcPoolPrice
                 )
             ).to.be.revertedWith(revertMessages.serviceConstructorAddressIs0);
-
-            await expect(
-                Refund.deploy(
-                    '1',
-                    '100',
-                    controller,
-                    ETHUSDPriceFeed,
-                )
-            ).to.be.revertedWith(revertMessages.refundConstructorStartBlockMustBeMoreThanCurrentBlockAndMoreThanEndBlock);
         });
     });
 
     describe('Transactions', async () => {
         it('check data', async () => {
             // 1. deploy contract
-            const blockNumBefore = await ethers.provider.getBlockNumber();
+            let block = await ethers.provider.getBlock();
 
-            refund_startBlock = +blockNumBefore + 90;
-            refund_endBlock = +refund_startBlock + 100;
+            refund_startTimestamp = +block.timestamp + 90;
+            refund_endTimestamp = +refund_startTimestamp + 100;
 
             refund = await Refund.deploy(
-                refund_startBlock,
-                refund_endBlock,
+                refund_startTimestamp,
+                refund_endTimestamp,
                 controller,
-                ETHUSDPriceFeed,
+                pETH,
+                calcPoolPrice
             );
 
             // 2. add token
@@ -337,6 +339,9 @@ describe("Refund", function () {
             expect(pToken2RefundBalanceAfter.sub(pToken2RefundBalanceBefore).toString()).to.be.equal(sum0.plus(sum1).toFixed());
 
             // 5. claimToken
+
+            await refund.setBlockTimestamp(refund_startTimestamp + 1);
+
             let amount1 = await refund.calcClaimAmount(accounts[0].address, pToken1.address);
             expect(amount1.toString()).to.be.equal('19000000000000000000');
 
@@ -346,9 +351,7 @@ describe("Refund", function () {
             let amount3 = await refund.calcClaimAmount(accounts[2].address, pToken1.address);
             expect(amount3.toString()).to.be.equal('50000000000000000000');
 
-            let currentBlockNumBefore = await ethers.provider.getBlockNumber();
-
-            for (let i = 0; i < refund_startBlock - currentBlockNumBefore.toString(); i++) {
+            for (let i = 0; i < 2; i++) {
                 await ethers.provider.send('evm_mine');
             }
 
@@ -400,11 +403,11 @@ describe("Refund", function () {
                 refund.connect(accounts[0]).removeUnused(baseToken1.address, '50000000000000000000')
             ).to.be.revertedWith(revertMessages.ownableCallerIsNotOwner);
 
-            currentBlockNumBefore = await ethers.provider.getBlockNumber();
-
-            for (let i = 0; i < refund_endBlock - currentBlockNumBefore.toString() + 1; i++) {
+            for (let i = 0; i < 2; i++) {
                 await ethers.provider.send('evm_mine');
             }
+
+            await refund.setBlockTimestamp(refund_endTimestamp + 1);
 
             const baseToken1OwnerBalanceBefore = await baseToken1.balanceOf(owner.address);
             baseToken1RefundContractBalanceBefore = await baseToken1.balanceOf(refund.address);
@@ -421,13 +424,13 @@ describe("Refund", function () {
             await pToken1.transfer(accounts[0].address, acc0amount1);
             await pToken1.connect(accounts[0]).approve(refund.address, acc0amount1);
 
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 2; i++) {
                 await ethers.provider.send('evm_mine');
             }
 
             await expect(
                 refund.refund(pToken1.address, acc0amount1)
-            ).to.be.revertedWith(revertMessages.refundRefundYouCanConvertPTokensBeforeStartBlockOnly);
+            ).to.be.revertedWith(revertMessages.refundRefundYouCanConvertPTokensBeforeStartTimestampOnly);
         });
 
         it('calc refund amount', async () => {
