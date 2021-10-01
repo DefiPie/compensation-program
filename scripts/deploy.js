@@ -126,6 +126,7 @@ async function main() {
 
         refund_startTimestamp = process.env.START_TIMESTAMP_REFUND_MAINNET;
         refund_endTimestamp = process.env.END_TIMESTAMP_REFUND_MAINNET;
+        calcPoolPrice = process.env.MAINNET_CALCPOOLPRICE;
     } else if (network === 'bsctestnet') {
         controller = process.env.CONTROLLER_BSCTESTNET;
         pETH = process.env.BSCTESTNET_PETH;
