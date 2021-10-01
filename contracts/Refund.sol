@@ -192,7 +192,8 @@ contract Refund is Service, BlackList {
 
         for(uint i = 0; i < baseTokenList.length; i++ ) {
             baseToken = baseTokenList[i];
-            price = CalcPoolPrice(calcPoolPrice).getPoolPriceInUSD(baseToken);
+
+            price = baseToken == pETH ? CalcPoolPrice(calcPoolPrice).getPoolPriceInUSD(pETH) : CalcPoolPrice(calcPoolPrice).getPoolPriceInUSD(baseToken);
             userTotalAmount += price * balances[user][baseToken].amount / 1e18 / (10 ** ERC20(baseToken).decimals());
         }
 
