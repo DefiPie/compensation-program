@@ -10,7 +10,7 @@ contract Refund is Service, BlackList {
     uint public endTimestamp;
 
     mapping(address => Base) public pTokens;
-    address[] pTokensList;
+    address[] public pTokensList;
 
     struct Base {
         address baseToken;
@@ -19,7 +19,7 @@ contract Refund is Service, BlackList {
 
     mapping(address => mapping(address => uint)) public pTokenAmounts;
     mapping(address => address) public baseTokens;
-    address[] baseTokenList;
+    address[] public baseTokenList;
 
     struct Balance {
         uint amount;
@@ -160,7 +160,15 @@ contract Refund is Service, BlackList {
     }
 
     function getPTokenListLength() public view returns (uint) {
-        return pTokensList.length;
+        return baseTokenList.length;
+    }
+
+    function getBaseTokenList() public view returns (address[] memory) {
+        return baseTokenList;
+    }
+
+    function getBaseTokenListLength() public view returns (uint) {
+        return baseTokenList.length;
     }
 
     function getAllTotalAmount() public view returns (uint) {
