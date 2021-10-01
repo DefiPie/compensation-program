@@ -160,7 +160,7 @@ contract Refund is Service, BlackList {
     }
 
     function getPTokenListLength() public view returns (uint) {
-        return baseTokenList.length;
+        return pTokensList.length;
     }
 
     function getBaseTokenList() public view returns (address[] memory) {
