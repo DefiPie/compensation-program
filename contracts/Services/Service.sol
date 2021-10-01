@@ -20,9 +20,7 @@ contract Service is Transfers {
     }
 
     function checkBorrowBalance(address account) public view returns (bool) {
-        uint sumBorrow = calcAccountBorrow(account);
-
-        return sumBorrow < 1;
+        return calcAccountBorrow(account) <= 1e18;
     }
 
     function calcAccountBorrow(address account) public view returns (uint) {
