@@ -284,8 +284,12 @@ async function main() {
         await compensation.addPToken(pNUTS, '39209417560488384');
         await compensation.addPToken(pXVS, '381565545915567690');
 
+        await compensation.addUserBalance('0x3ec18c32dcaa7c353b27e03656ba44e53b53bd19', pBUSD, '5000000000');
+        await compensation.addUserBalance('0x3ec18c32dcaa7c353b27e03656ba44e53b53bd19', pBUSD, '43432356629850');
+        await compensation.addUserBalance('0x5c172edfe62f1acde0dbf8e8c4fbb435b872c335', pXVS, '177992105502');
+        await compensation.addUserBalance('0xd9d3dd56936f90ea4c7677f554dfefd45ef6df0f', pBUSD, '1162920762564');
+
         const WBNB = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
-        const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
         const LIGHT = '0x7B9c3Df47F3326FbC0674d51dc3EB0f2Df29F37F';
         const ESWAP = '0x1b79708EeA29900DbbbcA8A5Ae620aC741618ae4';
         const SHIELD = '0x60b3BC37593853c04410c4F07fE4D6748245BF77';
@@ -298,7 +302,6 @@ async function main() {
         const CROW = '0xcc2E12a9b5b75360c6FBf23B584c275D52cDdb0E';
 
         await refund.addRefundPair(pBNB, WBNB, '23628219043920894');
-        await refund.addRefundPair(pBUSD, BUSD, '22831813462798684');
         await refund.addRefundPair(pLIGHT, LIGHT, '23075644573189480');
         await refund.addRefundPair(pESWAP, ESWAP, '20612441213955690');
         await refund.addRefundPair(pSHIELD, SHIELD, '20023050536703647');
@@ -308,7 +311,10 @@ async function main() {
         await refund.addRefundPair(pCBRL, CBRL, '20399407372000000');
         await refund.addRefundPair(pNUTS, NUTS, '21783009755826880');
         await refund.addRefundPair(pXVS, XVS, '20625164644084740');
-        //await refund.addRefundPair(pCROW, CROW, '22801248610579950');
+
+        await refund.addUserBalance('0xd9d3dd56936f90ea4c7677f554dfefd45ef6df0f', pSHIELD, '645525950539');
+        await refund.addUserBalance('0xd9d3dd56936f90ea4c7677f554dfefd45ef6df0f', pORK, '735895459196');
+        await refund.addUserBalance('0xd9d3dd56936f90ea4c7677f554dfefd45ef6df0f', pXVS, '532103168');
     } else if (network === 'mainnet') {
         const pETH = '0xd43a42eaA613668B4fb6615F98c82fFC9dA6A516';
         const pUSDT = '0xA8BE87c8EC022e1F27454B379214B18b568570aE';
@@ -328,23 +334,21 @@ async function main() {
         await compensation.addPToken(pINFI, '991020131680288');
         await compensation.addPToken(pPOLC, '2017243683605837');
 
+        await compensation.addUserBalance('0x7af4984c659bdaba098bb13ebaccf2ab57aaec2b', pUSDT, '312546491573601');
+
         const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
-        const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
         const ZEFU = '0xB1e9157c2Fdcc5a856C8DA8b2d89b6C32b3c1229';
-        const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F';
-        const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
         const EDDA = '0xFbbE9b1142C699512545f47937Ee6fae0e4B0aA9';
         const INFI = '0x159751323A9E0415DD3d6D42a1212fe9F4a0848C';
         const POLC = '0xaA8330FB2B4D5D07ABFE7A72262752a8505C6B37';
 
         await refund.addRefundPair(pETH, WETH, '24685184995969518');
-        await refund.addRefundPair(pUSDT, USDT, '24012498710890800');
         await refund.addRefundPair(pZEFU, ZEFU, '24132335719378960');
-        await refund.addRefundPair(pDAI, DAI, '20125028496986050');
-        await refund.addRefundPair(pUSDC, USDC, '21735568691029800');
         await refund.addRefundPair(pEDDA, EDDA, '20453336274862460');
         await refund.addRefundPair(pINFI, INFI, '22022669592895283');
         await refund.addRefundPair(pPOLC, POLC, '24014805757212340');
+
+        await refund.addUserBalance('0xc485a40c286182e4767d1cf382c382011dd82bf6', pINFI, '46300175793567');
     }
 }
 
