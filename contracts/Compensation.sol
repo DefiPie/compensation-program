@@ -2,13 +2,12 @@
 pragma solidity ^0.8.7;
 
 import "./Services/Blacklist.sol";
-import "./Services/Service.sol";
+import "./Services/Transfers.sol";
 
-contract Compensation is Service, BlackList {
+contract Compensation is Transfers, BlackList {
 
     address public stableCoin;
     uint public startTimestamp;
-    uint public endTimestamp;
 
     uint public constant year = 365 days;
     uint public rewardRatePerSec;
@@ -31,42 +30,32 @@ contract Compensation is Service, BlackList {
     constructor(
         address stableCoin_,
         uint startTimestamp_,
-        uint endTimestamp_,
-        address controller_,
-        address pETH_,
         uint rewardAPY_,
         uint lastApyTimestamp_
-    ) Service(controller_, pETH_) {
-        require(
-            stableCoin_ != address(0)
-            && controller_ != address(0),
-            "Compensation::Constructor: address is 0"
-        );
+    ) {
+        require(stableCoin_ != address(0), "Compensation::Constructor: stableCoin_ is 0");
 
         require(
             startTimestamp_ != 0
-            && endTimestamp_ != 0
             && lastApyTimestamp_ !=0,
             "Compensation::Constructor: timestamp is 0"
         );
 
         require(
             startTimestamp_ > getBlockTimestamp()
-            && startTimestamp_ < endTimestamp_
             && lastApyTimestamp_ > startTimestamp_,
-            "Compensation::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
+            "Compensation::Constructor: start timestamp must be more than current timestamp and less than lastApyTimestamp"
         );
 
         stableCoin = stableCoin_;
-
         startTimestamp = startTimestamp_;
-        endTimestamp = endTimestamp_;
-
         rewardRatePerSec = rewardAPY_ / year;
         lastApyTimestamp = lastApyTimestamp_;
     }
 
     function addPToken(address pToken, uint price) public onlyOwner returns (bool) {
+        require(pTokenPrices[pToken] == 0, "pToken has already been added");
+
         pTokenPrices[pToken] = price;
         pTokensList.push(pToken);
 
@@ -83,24 +72,31 @@ contract Compensation is Service, BlackList {
         return true;
     }
 
-    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(endTimestamp < getBlockTimestamp(), "Compensation::removeUnused: bad timing for the request");
-
+    function withdraw(address token, uint amount) public onlyOwner returns (bool) {
         doTransferOut(token, msg.sender, amount);
+
+        return true;
+    }
+
+    function addUserBalance(address user, address pToken, uint amount) public onlyOwner returns (bool) {
+        compensationInternal(user, pToken, amount);
 
         return true;
     }
 
     function compensation(address pToken, uint pTokenAmount) public returns (bool) {
         require(getBlockTimestamp() < startTimestamp, "Compensation::compensation: you can convert pTokens before start timestamp only");
-        require(checkBorrowBalance(msg.sender), "Compensation::compensation: sumBorrow must be less than $1");
         require(pTokenPrices[pToken] != 0, "Compensation::compensation: pToken is not allowed");
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] += amount;
+        compensationInternal(msg.sender, pToken, amount);
+        return true;
+    }
 
+    function compensationInternal(address user, address pToken, uint amount) internal returns (bool) {
+        pTokenAmounts[user][pToken] += amount;
         uint stableTokenAmount = calcCompensationAmount(pToken, amount);
-        balances[msg.sender].amount += stableTokenAmount;
+        balances[user].amount += stableTokenAmount;
         totalAmount += stableTokenAmount;
 
         return true;

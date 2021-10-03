@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import "./Services/ERC20.sol";
 import "./Services/Blacklist.sol";
-import "./Services/Service.sol";
+import "./Services/Transfers.sol";
+import "./Services/Interfaces.sol";
 
-contract Refund is Service, BlackList {
+contract Refund is Transfers, BlackList {
     uint public startTimestamp;
-    uint public endTimestamp;
 
     mapping(address => Base) public pTokens;
     address[] public pTokensList;
@@ -30,34 +29,36 @@ contract Refund is Service, BlackList {
     mapping(address => uint[]) public checkpoints;
     mapping(address => uint) public totalAmount;
 
+    address public controller;
+    address public pETH;
     address public calcPoolPrice;
 
     constructor(
         uint startTimestamp_,
-        uint endTimestamp_,
         address controller_,
         address pETH_,
         address calcPoolPrice_
-    ) Service(controller_, pETH_) {
-        require(
-            startTimestamp_ != 0
-            && endTimestamp_ != 0,
-            "Refund::Constructor: timestamp is 0"
-        );
+    ) {
+        require(startTimestamp_ != 0, "Refund::Constructor: timestamp is 0");
+
+        require(startTimestamp_ > getBlockTimestamp(), "Refund::Constructor: start timestamp must be more than current timestamp");
 
         require(
-            startTimestamp_ > getBlockTimestamp()
-            && startTimestamp_ < endTimestamp_,
-            "Refund::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
+            controller_ != address(0)
+            && pETH_ != address(0)
+            && calcPoolPrice_ != address(0),
+            "Service::Constructor: address is 0"
         );
 
+        controller = controller_;
+        pETH = pETH_;
         startTimestamp = startTimestamp_;
-        endTimestamp = endTimestamp_;
-
         calcPoolPrice = calcPoolPrice_;
     }
 
     function addRefundPair(address pToken, address baseToken_, uint course_) public onlyOwner returns (bool) {
+        require(baseTokens[pToken] == address(0), "pToken has already been added");
+
         pTokens[pToken] = Base({baseToken: baseToken_, course: course_});
         baseTokens[pToken] = baseToken_;
         pTokensList.push(pToken);
@@ -76,25 +77,33 @@ contract Refund is Service, BlackList {
         return true;
     }
 
-    function removeUnused(address token, uint amount) public onlyOwner returns (bool) {
-        require(getBlockTimestamp() > endTimestamp, "Refund::removeUnused: bad timing for the request");
-
+    function withdraw(address token, uint amount) public onlyOwner returns (bool) {
         doTransferOut(token, msg.sender, amount);
+
+        return true;
+    }
+
+    function addUserBalance(address user, address pToken, uint amount) public onlyOwner returns (bool) {
+        refundInternal(user, pToken, amount);
 
         return true;
     }
 
     function refund(address pToken, uint pTokenAmount) public returns (bool) {
         require(getBlockTimestamp() < startTimestamp, "Refund::refund: you can convert pTokens before start timestamp only");
-        require(checkBorrowBalance(msg.sender), "Refund::refund: sumBorrow must be less than $1");
         require(pTokensIsAllowed(pToken), "Refund::refund: pToken is not allowed");
 
         uint pTokenAmountIn = doTransferIn(msg.sender, pToken, pTokenAmount);
-        pTokenAmounts[msg.sender][pToken] += pTokenAmountIn;
+        refundInternal(msg.sender, pToken, pTokenAmountIn);
 
+        return true;
+    }
+
+    function refundInternal(address user, address pToken, uint amount) internal returns (bool) {
+        pTokenAmounts[user][pToken] += amount;
         address baseToken = baseTokens[pToken];
-        uint baseTokenAmount = calcRefundAmount(pToken, pTokenAmountIn);
-        balances[msg.sender][baseToken].amount += baseTokenAmount;
+        uint baseTokenAmount = calcRefundAmount(pToken, amount);
+        balances[user][baseToken].amount += baseTokenAmount;
         totalAmount[baseToken] += baseTokenAmount;
 
         return true;

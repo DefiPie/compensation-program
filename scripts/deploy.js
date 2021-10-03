@@ -207,12 +207,8 @@ async function main() {
     const compensation = await Compensation.deploy(
         compensation_stableCoin,
         compensation_startTimestamp,
-        compensation_endTimestamp,
-        controller,
-        ETHUSDPriceFeed,
-        pETH,
         rewardApy,
-        lastApyTimestamp,
+        lastApyTimestamp
     );
     console.log("Compensation deployed to:", compensation.address);
 
@@ -229,7 +225,6 @@ async function main() {
 
     const refund = await Refund.deploy(
         refund_startTimestamp,
-        refund_endTimestamp,
         controller,
         pETH,
         calcPoolPrice
@@ -288,7 +283,6 @@ async function main() {
         await compensation.addPToken(pCBRL, '3875887400680000');
         await compensation.addPToken(pNUTS, '39209417560488384');
         await compensation.addPToken(pXVS, '381565545915567690');
-        //await compensation.addPToken(pCROW, '230520623452963295');
 
         const WBNB = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
         const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';

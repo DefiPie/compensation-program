@@ -9,17 +9,11 @@ contract CompensationExt is Compensation {
     constructor(
         address stableCoin_,
         uint startTimestamp_,
-        uint endTimestamp_,
-        address controller_,
-        address pETH_,
         uint rewardAPY_,
         uint lastApyTimestamp_
     ) Compensation(
         stableCoin_,
         startTimestamp_,
-        endTimestamp_,
-        controller_,
-        pETH_,
         rewardAPY_,
         lastApyTimestamp_
     ) {}

@@ -105,43 +105,39 @@ async function main() {
 
     // Compensation
     await hre.run("verify:verify", {
-        address: '0x8ca3BD13BbF3468D48369DF508b9B614D9aa1802',
+        address: '0x454C241785013231fB0C4970E3A4E4c6Bf9B67D1',
         constructorArguments: [
             compensation_stableCoin,
             compensation_startTimestamp,
-            compensation_endTimestamp,
-            controller,
-            pETH,
             rewardApy,
             lastApyTimestamp
         ],
     });
 
     // Convert
-    // await hre.run("verify:verify", {
-    //     address: '0xAAeE36e885302784E4BcF268D3Da1bfE4ab7607E',
-    //     constructorArguments: [
-    //         convert_pTokenFrom,
-    //         convert_tokenTo,
-    //         convert_startTimestamp,
-    //         convert_endTimestamp,
-    //         controller,
-    //         pETH,
-    //         reservoir
-    //     ],
-    // });
+    await hre.run("verify:verify", {
+        address: '0xAAeE36e885302784E4BcF268D3Da1bfE4ab7607E',
+        constructorArguments: [
+            convert_pTokenFrom,
+            convert_tokenTo,
+            convert_startTimestamp,
+            convert_endTimestamp,
+            controller,
+            pETH,
+            reservoir
+        ],
+    });
 
     // Refund
-    // await hre.run("verify:verify", {
-    //     address: '0x42EFFb0C735006F04f4C0648a377ECf23e9BA2Dd',
-    //     constructorArguments: [
-    //         refund_startTimestamp,
-    //         refund_endTimestamp,
-    //         controller,
-    //         pETH,
-    //         calcPoolPrice
-    //     ],
-    // });
+    await hre.run("verify:verify", {
+        address: '0x3Bf5306c9059e75227BBFA7d54E05c61166889f8',
+        constructorArguments: [
+            refund_startTimestamp,
+            controller,
+            pETH,
+            calcPoolPrice
+        ],
+    });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

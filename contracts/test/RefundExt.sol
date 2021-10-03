@@ -8,13 +8,11 @@ contract RefundExt is Refund {
 
     constructor(
         uint startTimestamp_,
-        uint endTimestamp_,
         address controller_,
         address pETH_,
         address calcPoolPrice_
     ) Refund (
         startTimestamp_,
-        endTimestamp_,
         controller_,
         pETH_,
         calcPoolPrice_
