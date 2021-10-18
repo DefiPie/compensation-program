@@ -105,7 +105,7 @@ contract Exchange is Transfers, Ownable {
 
         nativeDeposits[msg.sender] += msg.value;
 
-        uint USDAmountIn = msg.value * uint(AggregatorInterface(priceFeed).latestAnswer()) / 1e8; // 1e8 is chainlink, also optimize: div 1e18 is native decimals, mul 1e18 is normalize
+        uint USDAmountIn = msg.value * uint(AggregatorInterface(priceFeed).latestAnswer()) / 1e8; // 1e8 is chainlink, also optimize: div 1e18 is native decimals, mul 1e18 is normalize price
 
         balances[msg.sender].amountIn += USDAmountIn;
 
@@ -125,12 +125,12 @@ contract Exchange is Transfers, Ownable {
         doTransferOut(token, msg.sender, amount);
 
         uint totalAmountIn = balances[msg.sender].amountIn;
-        uint totalTokenPrice = amount * tokenCourse;
+        uint totalTokenPrice = amount * tokenCourse / (10 ** ERC20(token).decimals());
         uint returnUSDValue;
 
         if (totalAmountIn > totalTokenPrice) {
             returnUSDValue = totalAmountIn - totalTokenPrice;
-            transferOut(payable(msg.sender), returnUSDValue);
+            returnUnusedDeposit(payable(msg.sender), returnUSDValue);
         }
 
         return true;
@@ -182,36 +182,40 @@ contract Exchange is Transfers, Ownable {
         return block.timestamp;
     }
 
-    function transferOut(address payable user, uint returnUSDValue) internal {
-        uint NativeValue = nativeDeposits[user];
-        uint returnValueInUSD = returnUSDValue;
+    function returnUnusedDeposit(address payable user, uint USDValue) internal {
+        uint nativeValue = nativeDeposits[user];
+        uint returnUSDValue = USDValue;
 
-        if (NativeValue > 0) {
-            uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-            uint amountETHInUSD = NativeValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+        if (nativeValue > 0) {
+            uint nativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
+            uint nativeAmountInUSD = nativeValue * nativeUSDPrice / 1e8; // 1e8 is chainlink, also optimize: div 1e18 is native, mul 1e18 is normalize price
 
-            if (amountETHInUSD > returnValueInUSD) {
-                user.transfer(returnValueInUSD * 1e8 / NativeUSDPrice);
+            if (nativeAmountInUSD >= returnUSDValue) {
+                user.transfer(returnUSDValue * 1e8 / nativeUSDPrice); // 1e8 is chainlink, also optimize: mul 1e18 is native, div 1e18 is normalize price
+                returnUSDValue = 0;
             } else {
-                user.transfer(NativeValue);
-                returnValueInUSD -= amountETHInUSD;
+                user.transfer(nativeValue);
+                returnUSDValue -= nativeAmountInUSD;
             }
         }
 
-        for(uint i = 0; i < stableCoins.length; i++) {
-            uint amountInStable = deposits[user][stableCoins[i]];
-            if (amountInStable > 0) {
-                uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals());
+        if (returnUSDValue > 0) {
+            for(uint i = 0; i < stableCoins.length; i++) {
+                uint amountInStable = deposits[user][stableCoins[i]];
 
-                if (amountStableInUSD > returnValueInUSD) {
-                    doTransferOut(stableCoins[i], user, returnValueInUSD * (10 ** ERC20(stableCoins[i]).decimals()) / 1e18);
-                    break;
+                if (amountInStable > 0) {
+                    uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals()); // mul 1e18 is normalize price
+
+                    if (amountStableInUSD > returnUSDValue) {
+                        doTransferOut(stableCoins[i], user, returnUSDValue * (10 ** ERC20(stableCoins[i]).decimals()) / 1e18); // div 1e18 is normalize price
+                        break;
+                    } else {
+                        doTransferOut(stableCoins[i], user, amountInStable);
+                        returnUSDValue -= amountStableInUSD;
+                    }
                 } else {
-                    doTransferOut(stableCoins[i], user, amountInStable);
-                    returnValueInUSD -= amountStableInUSD;
+                    continue;
                 }
-            } else {
-                continue;
             }
         }
     }
