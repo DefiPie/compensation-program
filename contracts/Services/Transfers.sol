@@ -1,9 +1,10 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 import "./ERC20.sol";
 
 contract Transfers {
+
     function doTransferIn(address from, address token, uint amount) internal returns (uint) {
         uint balanceBefore = ERC20(token).balanceOf(address(this));
         ERC20(token).transferFrom(from, address(this), amount);

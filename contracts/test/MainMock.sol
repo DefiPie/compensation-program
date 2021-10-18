@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import "../Services/Interfaces.sol";
@@ -40,15 +40,15 @@ contract MainMock {
         ethPrice = ethPrice_;
     }
 
-    function factory() external returns (address) {
+    function factory() external view returns (address) {
         return address(this);
     }
 
-    function registry() external returns (address) {
+    function registry() external view returns (address) {
         return address(this);
     }
 
-    function pETH() external returns (address) {
+    function pETH() external view returns (address) {
         return address(this);
     }
 

@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 import "./Services/ERC20.sol";
@@ -8,6 +8,15 @@ import "./Services/Interfaces.sol";
 
 contract Exchange is Transfers, Ownable {
 
+    address[] public stableCoins;
+    mapping(address => bool) public allowedStableCoins;
+
+    // user => stablecoin => amount
+    mapping(address => mapping(address => uint)) public deposits;
+
+    // user => native tokens amount
+    mapping(address => uint) public nativeDeposits;
+
     struct Balance {
         uint amountIn;
         uint tokenAmountOut;
@@ -15,27 +24,22 @@ contract Exchange is Transfers, Ownable {
 
     mapping(address => Balance) public balances;
 
-    mapping(address => mapping(address => uint)) public deposits;
-    mapping(address => uint) public depositsETH;
-
     address public convert;
 
     address public token;
-    uint public tokenCourse;
+    uint public tokenCourse; // in USD, 1e18 is $1
     uint public tokenAmount;
 
-    address[] public stableCoins;
+    uint public startTimestamp; // start exchange time
+    uint public endTimestamp; // end exchange time
 
-    uint public startTimestamp;
-    uint public endTimestamp;
-
-    address public priceFeed;
+    address public priceFeed; // native price in USD
 
     constructor(
         address convert_,
         address token_,
         uint tokenCourse_, // in USD, 1e18 is $1
-        uint tokenAmount_, // 800,000e18 tokens
+        uint tokenAmount_, // for example, 800,000e18 tokens
         address[] memory stableCoins_,
         uint startTimestamp_,
         uint endTimestamp_,
@@ -67,7 +71,10 @@ contract Exchange is Transfers, Ownable {
         tokenAmount = tokenAmount_;
 
         for(uint i = 0; i < stableCoins_.length; i++) {
+            require(stableCoins_[i] != address(0), "Exchange::Constructor: stable coin address is 0");
+
             stableCoins.push(stableCoins_[i]);
+            allowedStableCoins[stableCoins_[i]] = true;
         }
 
         startTimestamp = startTimestamp_;
@@ -92,16 +99,16 @@ contract Exchange is Transfers, Ownable {
         return true;
     }
 
-    function deposit(address stableCoin, uint amount) public returns (bool) {
+    function deposit(address stableCoin_, uint amount) public returns (bool) {
         require(getTimeStamp() < startTimestamp, "Exchange::deposit: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::deposit: deposit in convert is null");
-        require(checkStableCoin(stableCoin), "Exchange::deposit: this stable coin is not allowed");
+        require(allowedStableCoins[stableCoin_], "Exchange::deposit: this stable coin is not allowed");
 
-        uint amountIn = doTransferIn(msg.sender, stableCoin, amount);
+        uint amountIn = doTransferIn(msg.sender, stableCoin_, amount);
 
-        deposits[msg.sender][stableCoin] += amountIn;
+        deposits[msg.sender][stableCoin_] += amountIn;
 
-        uint USDAmountIn = amount * 1e18 / (10 ** ERC20(stableCoin).decimals()); // 1e18 is normalize
+        uint USDAmountIn = amount * 1e18 / (10 ** ERC20(stableCoin_).decimals()); // 1e18 is normalize
 
         balances[msg.sender].amountIn += USDAmountIn;
 
@@ -112,7 +119,7 @@ contract Exchange is Transfers, Ownable {
         require(getTimeStamp() < startTimestamp, "Exchange::depositNative: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::depositNative: deposit in convert is null");
 
-        depositsETH[msg.sender] += msg.value;
+        nativeDeposits[msg.sender] += msg.value;
 
         uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
         uint amountIn = msg.value * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
@@ -147,17 +154,17 @@ contract Exchange is Transfers, Ownable {
     }
 
     function transferOut(address payable user, uint returnUSDValue) internal {
-        uint ETHValue = depositsETH[user];
+        uint NativeValue = nativeDeposits[user];
         uint returnValueInUSD = returnUSDValue;
 
-        if (ETHValue > 0) {
+        if (NativeValue > 0) {
             uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-            uint amountETHInUSD = ETHValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+            uint amountETHInUSD = NativeValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
 
             if (amountETHInUSD > returnValueInUSD) {
                 user.transfer(returnValueInUSD * 1e8 / NativeUSDPrice);
             } else {
-                user.transfer(ETHValue);
+                user.transfer(NativeValue);
                 returnValueInUSD -= amountETHInUSD;
             }
         }
@@ -202,16 +209,6 @@ contract Exchange is Transfers, Ownable {
         } else {
             return false;
         }
-    }
-
-    function checkStableCoin(address stableCoin_) public view returns (bool) {
-        for (uint i = 0; i < stableCoins.length; i++) {
-            if (stableCoins[i] == stableCoin_) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     function calcTokenAmountMax(address user) public view returns (uint) {
