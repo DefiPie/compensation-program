@@ -90,6 +90,7 @@ contract Compensation is Transfers, BlackList {
 
         uint amount = doTransferIn(msg.sender, pToken, pTokenAmount);
         compensationInternal(msg.sender, pToken, amount);
+
         return true;
     }
 

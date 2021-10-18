@@ -7,6 +7,7 @@ import "./Services/Service.sol";
 
 contract Convert is Service, BlackList {
     address public pTokenFrom;
+    uint public pTokenFromTotalAmount;
     address public tokenTo;
     address public reservoir;
 
@@ -109,6 +110,7 @@ contract Convert is Service, BlackList {
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 
         balances[msg.sender].pTokenIn += amount;
+        pTokenFromTotalAmount += amount;
 
         uint calcAmount = calcConvertAmount(amount);
         balances[msg.sender].amount += calcAmount;

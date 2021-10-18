@@ -36,5 +36,5 @@ interface AggregatorInterface {
 
 interface ConvertInterface {
     function getPTokenInAmount(address user) external view returns (uint);
-    function pTokenFrom() external view returns (address);
+    function pTokenFromTotalAmount() external view returns (uint);
 }
