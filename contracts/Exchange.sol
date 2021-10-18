@@ -18,7 +18,7 @@ contract Exchange is Transfers, Ownable {
     mapping(address => uint) public nativeDeposits;
 
     struct Balance {
-        uint amountIn;
+        uint amountIn; // in USD, 1e18 is $1
         uint tokenAmountOut;
     }
 
@@ -83,22 +83,6 @@ contract Exchange is Transfers, Ownable {
         priceFeed = priceFeed_;
     }
 
-    function getTokens(address token_, address to, uint amount) public onlyOwner returns (bool) {
-        require(getTimeStamp() > endTimestamp, "Exchange::removeTokens: bad timing for the request");
-
-        doTransferOut(token_, to, amount);
-
-        return true;
-    }
-
-    function getNative(address payable to, uint amount) public onlyOwner returns (bool) {
-        require(getTimeStamp() > endTimestamp, "Exchange::removeNative: bad timing for the request");
-
-        to.transfer(amount);
-
-        return true;
-    }
-
     function deposit(address stableCoin_, uint amount) public returns (bool) {
         require(getTimeStamp() < startTimestamp, "Exchange::deposit: bad timing for the request");
         require(checkDepositPToken(msg.sender), "Exchange::deposit: deposit in convert is null");
@@ -121,10 +105,9 @@ contract Exchange is Transfers, Ownable {
 
         nativeDeposits[msg.sender] += msg.value;
 
-        uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-        uint amountIn = msg.value * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+        uint USDAmountIn = msg.value * uint(AggregatorInterface(priceFeed).latestAnswer()) / 1e8; // 1e8 is chainlink, also optimize: div 1e18 is native decimals, mul 1e18 is normalize
 
-        balances[msg.sender].amountIn += amountIn;
+        balances[msg.sender].amountIn += USDAmountIn;
 
         return true;
     }
@@ -153,38 +136,20 @@ contract Exchange is Transfers, Ownable {
         return true;
     }
 
-    function transferOut(address payable user, uint returnUSDValue) internal {
-        uint NativeValue = nativeDeposits[user];
-        uint returnValueInUSD = returnUSDValue;
+    function getTokens(address token_, address to, uint amount) public onlyOwner returns (bool) {
+        require(getTimeStamp() > endTimestamp, "Exchange::removeTokens: bad timing for the request");
 
-        if (NativeValue > 0) {
-            uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
-            uint amountETHInUSD = NativeValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+        doTransferOut(token_, to, amount);
 
-            if (amountETHInUSD > returnValueInUSD) {
-                user.transfer(returnValueInUSD * 1e8 / NativeUSDPrice);
-            } else {
-                user.transfer(NativeValue);
-                returnValueInUSD -= amountETHInUSD;
-            }
-        }
+        return true;
+    }
 
-        for(uint i = 0; i < stableCoins.length; i++) {
-            uint amountInStable = deposits[user][stableCoins[i]];
-            if (amountInStable > 0) {
-                uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals());
+    function getNative(address payable to, uint amount) public onlyOwner returns (bool) {
+        require(getTimeStamp() > endTimestamp, "Exchange::removeNative: bad timing for the request");
 
-                if (amountStableInUSD > returnValueInUSD) {
-                    doTransferOut(stableCoins[i], user, returnValueInUSD * (10 ** ERC20(stableCoins[i]).decimals()) / 1e18);
-                    break;
-                } else {
-                    doTransferOut(stableCoins[i], user, amountInStable);
-                    returnValueInUSD -= amountStableInUSD;
-                }
-            } else {
-                continue;
-            }
-        }
+        to.transfer(amount);
+
+        return true;
     }
 
     function calcAmount(address user) public view returns (uint) {
@@ -220,5 +185,39 @@ contract Exchange is Transfers, Ownable {
 
     function getTimeStamp() public view returns (uint) {
         return block.timestamp;
+    }
+
+    function transferOut(address payable user, uint returnUSDValue) internal {
+        uint NativeValue = nativeDeposits[user];
+        uint returnValueInUSD = returnUSDValue;
+
+        if (NativeValue > 0) {
+            uint NativeUSDPrice = uint(AggregatorInterface(priceFeed).latestAnswer());
+            uint amountETHInUSD = NativeValue * NativeUSDPrice / 1e8; // 1e8 is chainlink, also missed: div 1e18 is eth, mul 1e18 is normalize
+
+            if (amountETHInUSD > returnValueInUSD) {
+                user.transfer(returnValueInUSD * 1e8 / NativeUSDPrice);
+            } else {
+                user.transfer(NativeValue);
+                returnValueInUSD -= amountETHInUSD;
+            }
+        }
+
+        for(uint i = 0; i < stableCoins.length; i++) {
+            uint amountInStable = deposits[user][stableCoins[i]];
+            if (amountInStable > 0) {
+                uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals());
+
+                if (amountStableInUSD > returnValueInUSD) {
+                    doTransferOut(stableCoins[i], user, returnValueInUSD * (10 ** ERC20(stableCoins[i]).decimals()) / 1e18);
+                    break;
+                } else {
+                    doTransferOut(stableCoins[i], user, amountInStable);
+                    returnValueInUSD -= amountStableInUSD;
+                }
+            } else {
+                continue;
+            }
+        }
     }
 }
