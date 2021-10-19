@@ -113,7 +113,7 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function claim() public returns (bool) {
-        require(getTimeStamp() > startTimestamp, "Exchange::claim: bad timing for the request");
+        require(getTimeStamp() >= startTimestamp, "Exchange::claim: bad timing for the request");
         uint amount = calcClaimAmount(msg.sender);
 
         if (amount == 0) {
