@@ -30,8 +30,8 @@ contract Tokensale is Transfers, Ownable {
     uint public tokenCourse; // in USD, 1e18 is $1
     uint public tokenSaleAmount;
 
-    uint public startTimestamp; // start exchange time
-    uint public endTimestamp; // end exchange time
+    uint public startTimestamp; // start tokenSale time
+    uint public endTimestamp; // end tokenSale time
 
     address public priceFeed; // native price in USD
 
@@ -49,19 +49,19 @@ contract Tokensale is Transfers, Ownable {
             convert_ != address(0)
             && token_ != address(0)
             && priceFeed_ != address(0),
-            "Exchange::Constructor: address is 0"
+            "TokenSale::Constructor: address is 0"
         );
 
         require(
             startTimestamp_ != 0
             && endTimestamp_ != 0,
-            "Exchange::Constructor: timestamp num is 0"
+            "TokenSale::Constructor: timestamp num is 0"
         );
 
         require(
             startTimestamp_ > block.timestamp
             && startTimestamp_ < endTimestamp_,
-            "Exchange::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
+            "TokenSale::Constructor: start timestamp must be more than current timestamp and less than end timestamp"
         );
 
         convert = convert_;
@@ -71,7 +71,7 @@ contract Tokensale is Transfers, Ownable {
         tokenSaleAmount = tokenSaleAmount_;
 
         for(uint i = 0; i < stableCoins_.length; i++) {
-            require(stableCoins_[i] != address(0), "Exchange::Constructor: stable coin address is 0");
+            require(stableCoins_[i] != address(0), "TokenSale::Constructor: stable coin address is 0");
 
             stableCoins.push(stableCoins_[i]);
             allowedStableCoins[stableCoins_[i]] = true;
@@ -84,9 +84,9 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function deposit(address stableCoin_, uint amount) public returns (bool) {
-        require(getTimeStamp() < startTimestamp, "Exchange::deposit: bad timing for the request");
-        require(checkPTokenDeposit(msg.sender), "Exchange::deposit: deposit in convert is null");
-        require(allowedStableCoins[stableCoin_], "Exchange::deposit: this stable coin is not allowed");
+        require(getTimeStamp() < startTimestamp, "TokenSale::deposit: bad timing for the request");
+        require(checkPTokenDeposit(msg.sender), "TokenSale::deposit: deposit in convert is null");
+        require(allowedStableCoins[stableCoin_], "TokenSale::deposit: this stable coin is not allowed");
 
         uint amountIn = doTransferIn(msg.sender, stableCoin_, amount);
 
@@ -100,8 +100,8 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function depositNative() public payable returns (bool) {
-        require(getTimeStamp() < startTimestamp, "Exchange::depositNative: bad timing for the request");
-        require(checkPTokenDeposit(msg.sender), "Exchange::depositNative: deposit in convert is null");
+        require(getTimeStamp() < startTimestamp, "TokenSale::depositNative: bad timing for the request");
+        require(checkPTokenDeposit(msg.sender), "TokenSale::depositNative: deposit in convert is null");
 
         nativeDeposits[msg.sender] += msg.value;
 
@@ -113,7 +113,7 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function claim() public returns (bool) {
-        require(getTimeStamp() > startTimestamp, "Exchange::claim: bad timing for the request");
+        require(getTimeStamp() > startTimestamp, "TokenSale::claim: bad timing for the request");
         uint amount = calcClaimAmount(msg.sender);
 
         if (amount == 0) {
@@ -137,7 +137,7 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function getTokens(address token_, address to, uint amount) public onlyOwner returns (bool) {
-        require(getTimeStamp() > endTimestamp, "Exchange::removeTokens: bad timing for the request");
+        require(getTimeStamp() > endTimestamp, "TokenSale::removeTokens: bad timing for the request");
 
         doTransferOut(token_, to, amount);
 
@@ -145,7 +145,7 @@ contract Tokensale is Transfers, Ownable {
     }
 
     function getNative(address payable to, uint amount) public onlyOwner returns (bool) {
-        require(getTimeStamp() > endTimestamp, "Exchange::removeNative: bad timing for the request");
+        require(getTimeStamp() > endTimestamp, "TokenSale::removeNative: bad timing for the request");
 
         to.transfer(amount);
 
@@ -156,14 +156,14 @@ contract Tokensale is Transfers, Ownable {
         return ConvertInterface(convert).getPTokenInAmount(user) > 0 ? true : false;
     }
 
-    function calcExchangeMaxTokenAmount(address user) public view returns (uint) {
+    function calcMaxTokenSaleAmount(address user) public view returns (uint) {
         uint userPTokenAmount = ConvertInterface(convert).getPTokenInAmount(user);
 
         return userPTokenAmount * tokenSaleAmount / ConvertInterface(convert).pTokenFromTotalAmount();
     }
 
     function calcClaimAmount(address user) public view returns (uint) {
-        uint amountMax = calcExchangeMaxTokenAmount(user);
+        uint amountMax = calcMaxTokenSaleAmount(user);
         uint maxDeposit = amountMax * tokenCourse / (10 ** uint(ERC20(token).decimals())); // max in USD, 1e18 is for token course, 10** is decimals for token amountMax
         uint claimAmount;
 
