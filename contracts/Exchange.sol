@@ -6,13 +6,13 @@ import "./Services/Transfers.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./Services/Interfaces.sol";
 
-contract Exchange is Transfers, Ownable {
+contract Tokensale is Transfers, Ownable {
 
     address[] public stableCoins;
     mapping(address => bool) public allowedStableCoins;
 
     // user => stablecoin => amount
-    mapping(address => mapping(address => uint)) public deposits;
+    mapping(address => mapping(address => uint)) public stableDeposits;
 
     // user => native tokens amount
     mapping(address => uint) public nativeDeposits;
@@ -90,7 +90,7 @@ contract Exchange is Transfers, Ownable {
 
         uint amountIn = doTransferIn(msg.sender, stableCoin_, amount);
 
-        deposits[msg.sender][stableCoin_] += amountIn;
+        stableDeposits[msg.sender][stableCoin_] += amountIn;
 
         uint USDAmountIn = amount * 1e18 / (10 ** ERC20(stableCoin_).decimals()); // 1e18 is normalize
 
@@ -201,7 +201,7 @@ contract Exchange is Transfers, Ownable {
 
         if (returnUSDValue > 0) {
             for(uint i = 0; i < stableCoins.length; i++) {
-                uint amountInStable = deposits[user][stableCoins[i]];
+                uint amountInStable = stableDeposits[user][stableCoins[i]];
 
                 if (amountInStable > 0) {
                     uint amountStableInUSD = amountInStable * 1e18 / (10 ** ERC20(stableCoins[i]).decimals()); // mul 1e18 is normalize price
