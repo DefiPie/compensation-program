@@ -3,9 +3,10 @@ pragma solidity ^0.8.7;
 
 import "./Services/ERC20.sol";
 import "./Services/Blacklist.sol";
-import "./Services/Service.sol";
+import "./Services/Transfers.sol";
+import "./Services/Interfaces.sol";
 
-contract Convert is Service, BlackList {
+contract Convert is BlackList, Transfers {
     address public pTokenFrom;
     uint public pTokenFromTotalAmount;
     address public tokenTo;
@@ -37,14 +38,11 @@ contract Convert is Service, BlackList {
         address tokenTo_,
         uint startTimestamp_,
         uint endTimestamp_,
-        address controller_,
-        address pETH_,
         address reservoir_
-    ) Service(controller_, pETH_) {
+    ) {
         require(
             pTokenFrom_ != address(0)
             && tokenTo_ != address(0)
-            && controller_ != address(0)
             && reservoir_ != address(0),
             "Convert::Constructor: address is 0"
         );
@@ -63,8 +61,6 @@ contract Convert is Service, BlackList {
 
         pTokenFrom = pTokenFrom_;
         tokenTo = tokenTo_;
-
-        controller = controller_;
 
         reservoir = reservoir_;
 
@@ -105,7 +101,6 @@ contract Convert is Service, BlackList {
 
     function convert(uint pTokenFromAmount) public returns (bool) {
         require(block.timestamp < startTimestamp, "Convert::convert: you can convert pTokens before first checkpoint timestamp only");
-        require(checkBorrowBalance(msg.sender), "Convert::convert: sumBorrow must be less than $1");
 
         uint amount = doTransferIn(msg.sender, pTokenFrom, pTokenFromAmount);
 

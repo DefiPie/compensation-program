@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./Services/ERC20.sol";
 import "./Services/Transfers.sol";
-import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./Services/Interfaces.sol";
 
 contract Tokensale is Transfers, Ownable {
