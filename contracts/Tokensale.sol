@@ -28,7 +28,7 @@ contract Tokensale is Transfers, Ownable {
 
     address public token;
     uint public tokenCourse; // in USD, 1e18 is $1
-    uint public exchangeTokenAmount;
+    uint public tokenSaleAmount;
 
     uint public startTimestamp; // start exchange time
     uint public endTimestamp; // end exchange time
@@ -39,7 +39,7 @@ contract Tokensale is Transfers, Ownable {
         address convert_,
         address token_,
         uint tokenCourse_, // in USD, 1e18 is $1
-        uint exchangeTokenAmount_, // for example, 800,000e18 tokens
+        uint tokenSaleAmount_, // for example, 800,000e18 tokens
         address[] memory stableCoins_,
         uint startTimestamp_,
         uint endTimestamp_,
@@ -68,7 +68,7 @@ contract Tokensale is Transfers, Ownable {
 
         token = token_;
         tokenCourse = tokenCourse_;
-        exchangeTokenAmount = exchangeTokenAmount_;
+        tokenSaleAmount = tokenSaleAmount_;
 
         for(uint i = 0; i < stableCoins_.length; i++) {
             require(stableCoins_[i] != address(0), "Exchange::Constructor: stable coin address is 0");
@@ -159,7 +159,7 @@ contract Tokensale is Transfers, Ownable {
     function calcExchangeMaxTokenAmount(address user) public view returns (uint) {
         uint userPTokenAmount = ConvertInterface(convert).getPTokenInAmount(user);
 
-        return userPTokenAmount * exchangeTokenAmount / ConvertInterface(convert).pTokenFromTotalAmount();
+        return userPTokenAmount * tokenSaleAmount / ConvertInterface(convert).pTokenFromTotalAmount();
     }
 
     function calcClaimAmount(address user) public view returns (uint) {
