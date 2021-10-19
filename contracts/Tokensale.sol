@@ -164,10 +164,10 @@ contract Tokensale is Transfers, Ownable {
 
     function calcClaimAmount(address user) public view returns (uint) {
         uint amountMax = calcMaxTokenSaleAmount(user);
-        uint maxDeposit = amountMax * tokenCourse / (10 ** uint(ERC20(token).decimals())); // max in USD, 1e18 is for token course, 10** is decimals for token amountMax
+        uint maxUsdDeposit = amountMax * tokenCourse / (10 ** uint(ERC20(token).decimals())); // max in USD, 1e18 is for token course, 10** is decimals for token amountMax
         uint claimAmount;
 
-        if (maxDeposit > balances[msg.sender].amountIn) {
+        if (maxUsdDeposit > balances[msg.sender].amountIn) {
             claimAmount = (10 ** uint(ERC20(token).decimals())) * balances[msg.sender].amountIn / tokenCourse;
         } else {
             claimAmount = amountMax;
